@@ -4,9 +4,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 // Route <-> section mapping. Order matters: used for scroll-spy.
 const SECTIONS = [
   { path: '/', id: 'home' },
-  { path: '/about', id: 'about' },
-  { path: '/work', id: 'work' },
-  { path: '/contact', id: 'contact' },
+  { path: '/experience', id: 'experience' },
+  { path: '/projects', id: 'projects' },
+  { path: '/skills', id: 'skills' },
 ]
 
 export default function ScrollSync() {

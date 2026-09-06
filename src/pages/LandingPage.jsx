@@ -129,8 +129,15 @@ export default function LandingPage() {
         <div className="hero-cover">
           <canvas ref={canvasRef} className="hero-canvas" />
           <div className="hero-name">
-            <div className="hero-label">Software Developer</div>
+            <div className="hero-label">Full-Stack Software Engineer</div>
             <h1 className="hero-title">Srivathsav</h1>
+            <p className="hero-tagline">
+              React + Java/Spring Boot
+            </p>
+            <p className="hero-tagline">
+              Open to Relocation
+            </p>
+
           </div>
         </div>
       </div>

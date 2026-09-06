@@ -51,11 +51,15 @@
   opacity: 0;
   transform: translateY(20px);
   transition: all 1s ease 0.3s;
+  /* max-width: 27ch; */
+  display: flex;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .hero-title {
   font-family: 'IM Fell English', Georgia, serif;
-  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-size: clamp(3.4rem, 5.5vw, 4.5rem);
   font-weight: 400;
   font-style: italic;
   line-height: 0.95;
@@ -65,11 +69,28 @@
   opacity: 0;
   transform: translateY(40px);
   transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.hero-tagline {
+  display: flex;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  color: rgba(240, 237, 230, 0.55);
+  max-width: 32ch;
+  /* margin: 0.9rem 0 0; */
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.75s;
 }
 
 /* Entrance animation */
 body.loaded .hero-label,
-body.loaded .hero-title {
+body.loaded .hero-title,
+body.loaded .hero-tagline {
   opacity: 1;
   transform: translateY(0);
 }
@@ -77,6 +98,17 @@ body.loaded .hero-title {
 @media (max-width: 768px) {
   .hero-name {
     left: 1.5rem;
-    bottom: 2.5rem;
+    bottom: 5.5rem;
+  }
+
+  .hero-tagline {
+    margin: 0.25rem 0 0;
+    font-size: 0.65rem;
+    max-width: 32ch;
+  }
+
+  .hero-label {
+    max-width: 27ch;
+    margin-bottom: 0.5rem;
   }
 }
