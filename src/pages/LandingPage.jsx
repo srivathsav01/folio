@@ -125,11 +125,11 @@ export default function LandingPage() {
 
   return (
     <>
-      <div className="landing-page">
+      <div id="home" className="landing-page">
         <div className="hero-cover">
           <canvas ref={canvasRef} className="hero-canvas" />
           <div className="hero-name">
-            <div className="hero-label">Portfolio · Software Developer</div>
+            <div className="hero-label">Software Developer</div>
             <h1 className="hero-title">Srivathsav</h1>
           </div>
         </div>

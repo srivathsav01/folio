@@ -3,6 +3,7 @@
   background: #0a0a0a;
   height: 100vh;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* Hero cover — full-screen video */
