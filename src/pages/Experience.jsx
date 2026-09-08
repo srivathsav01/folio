@@ -1,9 +1,9 @@
-import './pages.css'
+import { PAGE, PAGE_TITLE } from './page-styles'
 
 export default function Experience() {
   return (
-    <section id="experience" className="page">
-      <h1 className="page-title">Experience</h1>
+    <section id="experience" className={PAGE}>
+      <h1 className={PAGE_TITLE}>Experience</h1>
     </section>
   )
 }

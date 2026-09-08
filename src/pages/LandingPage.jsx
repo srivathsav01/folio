@@ -1,16 +1,19 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import fontData from 'three/examples/fonts/helvetiker_bold.typeface.json'
-import './LandingPage.css'
+
+import { NAME, ROLE, STACK, LOCATION_NOTE } from '../site'
 
 export default function LandingPage() {
   const canvasRef = useRef(null)
+  // Drives the staggered hero entrance, replacing the old body.loaded class
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => document.body.classList.add('loaded'), 200)
+    const timer = setTimeout(() => setLoaded(true), 200)
 
     const canvas = canvasRef.current
     const w = window.innerWidth
@@ -26,7 +29,7 @@ export default function LandingPage() {
     camera.position.z = 7
 
     const font = new FontLoader().parse(fontData)
-    const textGeo = new TextGeometry('S', {
+    const textGeo = new TextGeometry(NAME.charAt(0).toUpperCase() || 'S', {
       font,
       size: 3,
       depth: 0.6,
@@ -108,7 +111,6 @@ export default function LandingPage() {
 
     return () => {
       clearTimeout(timer)
-      document.body.classList.remove('loaded')
 
       canvas.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mouseup', onMouseUp)
@@ -123,24 +125,46 @@ export default function LandingPage() {
     }
   }, [])
 
-  return (
-    <>
-      <div id="home" className="landing-page">
-        <div className="hero-cover">
-          <canvas ref={canvasRef} className="hero-canvas" />
-          <div className="hero-name">
-            <div className="hero-label">Full-Stack Software Engineer</div>
-            <h1 className="hero-title">Srivathsav</h1>
-            <p className="hero-tagline">
-              React + Java/Spring Boot
-            </p>
-            <p className="hero-tagline">
-              Open to Relocation
-            </p>
+  const rise = (delay, distance) =>
+    `transition-[opacity,translate] duration-1000 ease-out-expo ${delay} ${
+      loaded ? 'translate-y-0 opacity-100' : `${distance} opacity-0`
+    }`
 
+  return (
+    <div id="home" className="h-screen shrink-0 overflow-hidden bg-ink">
+      <div className="relative h-screen w-screen overflow-hidden">
+        <canvas ref={canvasRef} className="block size-full" />
+
+        {/* Scrim for hero legibility */}
+        <div className="hero-scrim pointer-events-none absolute inset-0 z-[1]" />
+
+        <div className="absolute bottom-22 left-6 z-[2] md:bottom-16 md:left-12">
+          <div
+            className={`mb-2 flex max-w-[27ch] justify-start text-left font-mono text-[0.85rem] tracking-[0.3em] text-cream/40 uppercase md:mb-[1.2rem] md:max-w-none ${rise('delay-300', 'translate-y-5')}`}
+          >
+            {ROLE}
           </div>
+
+          <h1
+            className={`m-0 flex justify-start font-serif text-[clamp(3.4rem,5.5vw,4.5rem)] leading-[0.95] font-normal tracking-[-0.02em] text-cream italic ${rise('delay-500', 'translate-y-10')} duration-[1200ms]`}
+          >
+            {NAME}
+          </h1>
+
+          <p
+            className={`flex max-w-[32ch] font-mono text-[0.75rem] leading-relaxed tracking-[0.08em] text-cream/55 md:text-[0.82rem] ${rise('delay-700', 'translate-y-5')}`}
+          >
+            {STACK}
+          </p>
+          {LOCATION_NOTE && (
+            <p
+              className={`flex max-w-[32ch] font-mono text-[0.75rem] leading-relaxed tracking-[0.08em] text-cream/55 md:text-[0.82rem] ${rise('delay-700', 'translate-y-5')}`}
+            >
+              {LOCATION_NOTE}
+            </p>
+          )}
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import './pages.css'
+import { PAGE, PAGE_TITLE } from './page-styles'
 
 export default function Blog() {
   // Standalone route: it isn't part of the one-page scroll, so start at the top
@@ -8,8 +8,8 @@ export default function Blog() {
   }, [])
 
   return (
-    <main className="page">
-      <h1 className="page-title">Blog</h1>
+    <main className={PAGE}>
+      <h1 className={PAGE_TITLE}>Blog</h1>
     </main>
   )
 }

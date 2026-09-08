@@ -9,7 +9,7 @@ import Experience from './pages/Experience'
 import Projects from './pages/Projects'
 import Skills from './pages/Skills'
 import Blog from './pages/Blog'
-import './App.css'
+import { SHOW_BLOG } from './site'
 
 // The stacked one-page scroll: /, /experience, /projects and /skills all live here
 function ScrollHome() {
@@ -26,12 +26,12 @@ function ScrollHome() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Cursor />
       <Navbar />
       <Dock />
       <Routes>
-        <Route path="/blog" element={<Blog />} />
+        {SHOW_BLOG && <Route path="/blog" element={<Blog />} />}
         <Route path="*" element={<ScrollHome />} />
       </Routes>
       <Footer />

@@ -1,9 +1,9 @@
-import './pages.css'
+import { PAGE, PAGE_TITLE } from './page-styles'
 
 export default function Projects() {
   return (
-    <section id="projects" className="page">
-      <h1 className="page-title">Projects</h1>
+    <section id="projects" className={PAGE}>
+      <h1 className={PAGE_TITLE}>Projects</h1>
     </section>
   )
 }

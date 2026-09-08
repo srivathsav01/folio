@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import './Cursor.css'
 
 export default function Cursor() {
   const dotRef = useRef(null)
@@ -43,8 +42,14 @@ export default function Cursor() {
 
   return (
     <>
-      <div className="cursor-dot" ref={dotRef} />
-      <div className="cursor-ring" ref={ringRef} />
+      <div
+        ref={dotRef}
+        className="pointer-events-none fixed z-[9999] hidden size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cream mix-blend-difference transition-transform duration-100 ease-in-out md:block"
+      />
+      <div
+        ref={ringRef}
+        className="pointer-events-none fixed z-[9999] hidden size-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cream/40 transition-all duration-[180ms] ease-in-out md:block"
+      />
     </>
   )
 }

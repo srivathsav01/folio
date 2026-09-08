@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .claude
+# .env is committed on purpose: it holds public site config, not secrets.
+# Machine-specific overrides belong in .env.local (already covered by *.local).
+.env.local
+.env.*.local
+.env
