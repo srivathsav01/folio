@@ -23,7 +23,6 @@ export const projects = [
     id: 'folio',
     name: 'Portfolio',
     kind: 'personal',
-    year: '2025',
     // One line in serif italic at the top of the expanded row. Optional.
     summary: 'Placeholder — the one-line pitch, in plain language.',
     bullets: [
@@ -40,7 +39,6 @@ export const projects = [
     name: 'Placeholder Work Project',
     kind: 'work',
     companyId: 'comcast',
-    year: '2025',
     summary: 'Placeholder — what this system does, without the internal jargon.',
     bullets: [
       'Placeholder — the surface you owned and the scale it runs at.',
@@ -53,7 +51,6 @@ export const projects = [
     id: 'side-tool',
     name: 'Placeholder Side Tool',
     kind: 'personal',
-    year: '2024',
     summary: 'Placeholder — the itch you scratched by building this.',
     bullets: [
       'Placeholder — what it does in one sentence.',
@@ -68,7 +65,6 @@ export const projects = [
     name: 'Placeholder Internal Service',
     kind: 'work',
     companyId: 'comcast',
-    year: '2024',
     summary: 'Placeholder — the one-line version of what this service does.',
     bullets: [
       'Placeholder — what it replaced, and why that mattered.',

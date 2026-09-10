@@ -22,6 +22,18 @@ const LABEL_TEXT =
 const LABEL_HIDDEN = 'ml-0 grid-cols-[0fr] opacity-0'
 const LABEL_SHOWN = 'md:ml-[0.4rem] md:grid-cols-[1fr] md:opacity-100'
 
+// Hover tooltip, drawn from data-tip and floated above the dock. Hidden below
+// md, where there is no hover to speak of.
+const TOOLTIP = [
+  'after:pointer-events-none after:absolute after:bottom-full after:left-1/2 after:mb-2',
+  'after:-translate-x-1/2 after:translate-y-[3px] after:rounded-md after:border',
+  'after:border-cream/15 after:bg-ink/95 after:px-2 after:py-1 after:font-mono',
+  'after:text-[0.55rem] after:tracking-[0.14em] after:whitespace-nowrap after:uppercase',
+  'after:text-cream after:opacity-0 after:transition after:duration-[250ms]',
+  'after:content-[attr(data-tip)] hover:after:translate-y-0 hover:after:opacity-100',
+  'max-md:after:hidden',
+].join(' ')
+
 function DockItem({ item }) {
   const { Icon } = item
 
@@ -29,8 +41,9 @@ function DockItem({ item }) {
     <NavLink
       to={item.to}
       aria-label={item.label}
+      data-tip={item.label}
       className={({ isActive }) =>
-        `flex h-[1.9rem] items-center rounded-[0.65rem] px-[0.45rem] text-cream no-underline transition-colors duration-[250ms] md:h-8 md:px-2 ${
+        `relative flex h-[1.9rem] items-center rounded-[0.65rem] px-[0.45rem] text-cream no-underline transition-colors duration-[250ms] md:h-8 md:px-2 ${TOOLTIP} ${
           isActive ? 'bg-cream/15' : 'hover:bg-cream/10'
         }`
       }

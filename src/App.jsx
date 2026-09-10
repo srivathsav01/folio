@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Dock from './components/Dock'
-import Cursor from './components/Cursor'
+// import Cursor from './components/Cursor'
 import Footer from './components/Footer'
 import ScrollSync from './components/ScrollSync'
 import LandingPage from './pages/LandingPage'
@@ -30,7 +30,7 @@ function ScrollHome() {
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <Cursor />
+      {/* <Cursor /> */}
       <Navbar />
       <Dock />
       <Suspense fallback={<div className="min-h-screen bg-ink" />}>

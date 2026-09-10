@@ -10,6 +10,8 @@
 //   date: 2026-03-04
 //   summary: One or two lines that run under the title on the blog front page.
 //   tags: [java, testing]
+//   cover: my-photo.jpg
+//   coverAlt: What the photo shows, for screen readers.
 //   draft: false
 //   ---
 //
@@ -28,6 +30,28 @@ const files = import.meta.glob('../content/blog/*.md', {
   import: 'default',
   eager: true,
 })
+
+// Cover images live beside the posts, in src/content/blog/images/. Dropping a
+// file there and naming it in a post's `cover:` is all it takes — Vite hashes
+// and fingerprints it like any other asset.
+const images = import.meta.glob('../content/blog/images/*', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+})
+
+const imageByName = new Map(
+  Object.entries(images).map(([path, url]) => [path.split('/').pop(), url]),
+)
+
+// `cover: photo.jpg` resolves against that folder. A full URL is left alone, and
+// a leading slash means "already in public/", which needs the base path applied.
+const resolveCover = value => {
+  if (!value) return ''
+  if (/^https?:\/\//.test(value)) return value
+  if (value.startsWith('/')) return import.meta.env.BASE_URL.replace(/\/$/, '') + value
+  return imageByName.get(value.split('/').pop()) ?? ''
+}
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 
@@ -99,6 +123,8 @@ export const posts = Object.entries(files)
       title: data.title || fallbackSlug,
       summary: data.summary || '',
       tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
+      cover: resolveCover(data.cover),
+      coverAlt: data.coverAlt || data.title || '',
       draft: String(data.draft) === 'true',
       date,
       dateLabel: formatDate(date),

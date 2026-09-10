@@ -3,6 +3,8 @@ title: Formatting reference
 date: 2026-08-21
 summary: A sample post showing every markdown element the reader styles, so you can see what a piece will look like before you write one.
 tags: [meta, markdown]
+cover: formatting-reference.svg
+coverAlt: Abstract blocks standing in for headings, body copy and a code block.
 ---
 
 A second sample post — delete this one too. It exists so you can see how each

@@ -37,26 +37,43 @@ const LeadPost = ({ post }) => (
       to={`/blog/${post.slug}`}
       className="group block border-t border-cream/12 pt-8 md:pt-10"
     >
-      <Meta post={post} lead />
+      {/* Newspaper lead: copy on the left, picture on the right. On a phone the
+          columns collapse and the headline still comes first. */}
+      <div className="grid gap-6 md:grid-cols-[1.3fr_1fr] md:items-start md:gap-10">
+        <div>
+          <Meta post={post} lead />
 
-      <h2 className="mt-4 max-w-[18ch] font-serif text-[clamp(2rem,5.5vw,3.4rem)] leading-[1.05] font-normal tracking-[-0.02em] text-cream italic transition-transform duration-[500ms] ease-out-expo group-hover:translate-x-1">
-        {post.title}
-      </h2>
+          <h2 className="mt-4 font-serif text-[clamp(1.6rem,3.6vw,2.4rem)] leading-[1.08] font-normal tracking-[-0.02em] text-cream italic transition-transform duration-[500ms] ease-out-expo group-hover:translate-x-1">
+            {post.title}
+          </h2>
 
-      {post.summary && (
-        <p className="mt-5 max-w-[54ch] font-serif text-[1.05rem] leading-relaxed text-cream/65 italic md:text-[1.2rem]">
-          {post.summary}
-        </p>
-      )}
+          {post.summary && (
+            <p className="mt-4 max-w-[46ch] font-serif text-[1rem] leading-relaxed text-cream/65 italic md:text-[1.1rem]">
+              {post.summary}
+            </p>
+          )}
 
-      <span className="mt-7 inline-flex items-center gap-2 font-mono text-[0.62rem] tracking-[0.24em] text-cream/60 uppercase transition-colors duration-[300ms] group-hover:text-cream">
-        Read
-        <ArrowRight
-          className="size-3.5 transition-transform duration-[400ms] ease-out-expo group-hover:translate-x-1"
-          strokeWidth={1.6}
-          aria-hidden="true"
-        />
-      </span>
+          <span className="mt-6 inline-flex items-center gap-2 font-mono text-[0.62rem] tracking-[0.24em] text-cream/60 uppercase transition-colors duration-[300ms] group-hover:text-cream">
+            Read
+            <ArrowRight
+              className="size-3.5 transition-transform duration-[400ms] ease-out-expo group-hover:translate-x-1"
+              strokeWidth={1.6}
+              aria-hidden="true"
+            />
+          </span>
+        </div>
+
+        {post.cover && (
+          <div className="overflow-hidden rounded-xl border border-cream/10">
+            <img
+              src={post.cover}
+              alt={post.coverAlt}
+              loading="lazy"
+              className="aspect-[4/3] w-full object-cover transition-transform duration-[800ms] ease-out-expo group-hover:scale-[1.03]"
+            />
+          </div>
+        )}
+      </div>
     </Link>
   </motion.article>
 )
@@ -65,16 +82,29 @@ const PostRow = ({ post }) => (
   <motion.article variants={rise}>
     <Link
       to={`/blog/${post.slug}`}
-      className="group flex flex-col gap-2 border-t border-cream/8 py-5 md:py-6"
+      className="group flex items-start gap-4 border-t border-cream/8 py-5 md:gap-5 md:py-6"
     >
-      <div className="flex items-baseline justify-between gap-4 font-mono text-[0.6rem] tracking-[0.18em] text-cream/30 uppercase">
-        <span>{post.dateLabel}</span>
-        <span className="text-cream/20">{post.readingTime} min</span>
-      </div>
+      {post.cover && (
+        <span className="size-16 shrink-0 overflow-hidden rounded-lg border border-cream/10 md:size-20">
+          <img
+            src={post.cover}
+            alt={post.coverAlt}
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-[600ms] ease-out-expo group-hover:scale-105"
+          />
+        </span>
+      )}
 
-      <h3 className="font-serif text-[1.15rem] leading-snug text-cream/85 italic transition-[color,transform] duration-[400ms] ease-out-expo group-hover:translate-x-1 group-hover:text-cream md:text-[1.3rem]">
-        {post.title}
-      </h3>
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="flex items-baseline justify-between gap-4 font-mono text-[0.6rem] tracking-[0.18em] text-cream/30 uppercase">
+          <span>{post.dateLabel}</span>
+          <span className="text-cream/20">{post.readingTime} min</span>
+        </span>
+
+        <span className="font-serif text-[1.15rem] leading-snug text-cream/85 italic transition-[color,transform] duration-[400ms] ease-out-expo group-hover:translate-x-1 group-hover:text-cream md:text-[1.3rem]">
+          {post.title}
+        </span>
+      </span>
     </Link>
   </motion.article>
 )

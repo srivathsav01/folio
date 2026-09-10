@@ -3,6 +3,8 @@ title: How this blog works
 date: 2026-09-08
 summary: A sample post. Delete it once you have written something real — but read it first, because it explains the whole publishing workflow.
 tags: [meta]
+cover: hello-world.svg
+coverAlt: Concentric rings with a green marker at the centre.
 ---
 
 This file lives at `src/content/blog/hello-world.md`. That is the entire reason
@@ -31,9 +33,18 @@ so the link stays clean. Setting `slug:` in the frontmatter overrides both.
 | `date`    | yes      | `YYYY-MM-DD`, used for ordering                |
 | `summary` | no       | The standfirst under the title on the index    |
 | `tags`    | no       | `[like, this]`                                 |
+| `cover`   | no       | A file in `src/content/blog/images/`           |
+| `coverAlt`| no       | Describes the image for screen readers         |
 | `draft`   | no       | `true` keeps it out of the built site          |
 
 Reading time is counted from the body, so there is nothing to maintain there.
+
+## Cover images
+
+Drop a photo in `src/content/blog/images/` and name it in `cover:`. The newest
+post shows it full width on the index; older ones show it as a thumbnail. A
+post without a cover simply renders without one. A full `https://` URL works
+too, as does a path into `public/`.
 
 ## Drafts
 

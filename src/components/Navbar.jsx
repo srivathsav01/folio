@@ -31,7 +31,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 right-0 left-0 z-[100] flex items-center justify-between p-6 mix-blend-difference md:px-12 md:py-8">
+    <nav className="fixed top-0 right-0 left-0 z-[100] flex items-center justify-between bg-ink p-6 md:px-12 md:py-8">
       <Link
         to="/"
         className="font-serif text-[0.85rem] tracking-[0.25em] text-cream uppercase no-underline opacity-90"

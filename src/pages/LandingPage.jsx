@@ -22,7 +22,13 @@ export default function LandingPage() {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(w, h)
-    renderer.setClearColor(0x0a0a0a, 1)
+    // Read the ground colour from the theme token rather than repeating the hex,
+    // so the canvas can never drift from the CSS background behind every other
+    // section — a mismatch of even one step is visible at this darkness.
+    const ink = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-ink')
+      .trim()
+    renderer.setClearColor(new THREE.Color(ink || '#0a0a0a'), 1)
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100)
@@ -134,9 +140,6 @@ export default function LandingPage() {
     <div id="home" className="h-screen shrink-0 overflow-hidden bg-ink">
       <div className="relative h-screen w-screen overflow-hidden">
         <canvas ref={canvasRef} className="block size-full" />
-
-        {/* Scrim for hero legibility */}
-        <div className="hero-scrim pointer-events-none absolute inset-0 z-[1]" />
 
         <div className="absolute bottom-22 left-6 z-[2] md:bottom-16 md:left-12">
           <div

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import SkillPill from '../components/SkillPill'
 import SectionRule from '../components/SectionRule'
 import Logomark from '../components/Logomark'
+import HintBadge from '../components/HintBadge'
 import { getSkill } from '../utils/skill-icons'
 import { companies } from '../utils/experience'
 import { PAGE, PAGE_TITLE } from './page-styles'
@@ -72,7 +74,7 @@ const RailNode = ({ role, isActive, isPast }) => (
 
 // One station per role, a hairline between them, and a filled segment that grows
 // to whichever station is selected.
-const Rail = ({ companyName, roles, activeIndex, onSelect }) => {
+const Rail = ({ companyName, roles, activeIndex, onSelect, showHint, reduceMotion }) => {
   // Nodes sit centred in equal columns, so the first and last centres land half
   // a column in from each edge — that inset is where the line starts and ends.
   const inset = 50 / roles.length
@@ -86,65 +88,83 @@ const Rail = ({ companyName, roles, activeIndex, onSelect }) => {
   }
 
   return (
-    <div className="relative mb-10 md:mb-14">
-      {/* Both lines are pinned to the vertical centre of the 0.6rem nodes */}
-      <span
-        aria-hidden="true"
-        className="absolute top-[0.3rem] h-px -translate-y-1/2 bg-cream/12"
-        style={{ left: `${inset}%`, right: `${inset}%` }}
-      />
-      <motion.span
-        aria-hidden="true"
-        className="absolute top-[0.3rem] h-px -translate-y-1/2 bg-linear-to-r from-cream/30 to-cream/60"
-        style={{ left: `${inset}%` }}
-        initial={false}
-        animate={{ width: `${(span * activeIndex) / (roles.length - 1)}%` }}
-        transition={{ duration: 0.55, ease: EASE_OUT_EXPO }}
-      />
+    <div className="mb-10 md:mb-14">
+      {/* Nothing about a row of dots says "clickable", so a badge sits above the
+          line until the visitor switches roles and has learned it */}
+      <AnimatePresence>
+        {showHint && (
+          <span className="mb-4 block">
+            <HintBadge
+              icon={ArrowLeft}
+              label="Pick an earlier role"
+              reduceMotion={reduceMotion}
+            />
+          </span>
+        )}
+      </AnimatePresence>
 
-      <div
-        role="tablist"
-        aria-label={`${companyName} roles`}
-        onKeyDown={onKeyDown}
-        className="grid items-start gap-2"
-        style={{ gridTemplateColumns: `repeat(${roles.length}, minmax(0, 1fr))` }}
-      >
-        {roles.map((role, index) => {
-          const isActive = index === activeIndex
+      <div className="relative">
+        {/* Both lines are pinned to the vertical centre of the 0.6rem nodes */}
+        <span
+          aria-hidden="true"
+          className="absolute top-[0.3rem] h-px -translate-y-1/2 bg-cream/12"
+          style={{ left: `${inset}%`, right: `${inset}%` }}
+        />
+        <motion.span
+          aria-hidden="true"
+          className="absolute top-[0.3rem] h-px -translate-y-1/2 bg-linear-to-r from-cream/30 to-cream/60"
+          style={{ left: `${inset}%` }}
+          initial={false}
+          animate={{ width: `${(span * activeIndex) / (roles.length - 1)}%` }}
+          transition={{ duration: 0.55, ease: EASE_OUT_EXPO }}
+        />
 
-          return (
-            <button
-              key={role.id}
-              type="button"
-              role="tab"
-              id={`role-tab-${role.id}`}
-              aria-selected={isActive}
-              aria-controls={`role-panel-${role.id}`}
-              onClick={() => onSelect(index)}
-              className="group flex cursor-pointer flex-col items-center gap-3 border-none bg-transparent p-0 text-center focus-visible:outline-none"
-            >
-              <RailNode role={role} isActive={isActive} isPast={index < activeIndex} />
+        <div
+          role="tablist"
+          aria-label={`${companyName} roles`}
+          onKeyDown={onKeyDown}
+          className="grid items-start gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${roles.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {roles.map((role, index) => {
+            const isActive = index === activeIndex
 
-              <span
-                className={`font-mono text-[0.6rem] leading-relaxed tracking-[0.16em] text-balance uppercase transition-colors duration-[300ms] md:text-[0.62rem] ${
-                  isActive
-                    ? 'text-cream'
-                    : 'text-cream/35 group-hover:text-cream/70 group-focus-visible:text-cream/70'
-                }`}
+            return (
+              <button
+                key={role.id}
+                type="button"
+                role="tab"
+                id={`role-tab-${role.id}`}
+                aria-selected={isActive}
+                aria-controls={`role-panel-${role.id}`}
+                onClick={() => onSelect(index)}
+                className="group flex cursor-pointer flex-col items-center gap-3 border-none bg-transparent p-0 text-center focus-visible:outline-none"
               >
-                {role.title}
-              </span>
+                <RailNode role={role} isActive={isActive} isPast={index < activeIndex} />
 
-              <span
-                className={`hidden font-mono text-[0.58rem] tracking-[0.1em] whitespace-nowrap transition-colors duration-[300ms] md:block ${
-                  isActive ? 'text-cream/45' : 'text-cream/20'
-                }`}
-              >
-                {role.period}
-              </span>
-            </button>
-          )
-        })}
+                <span
+                  className={`font-mono text-[0.6rem] leading-relaxed tracking-[0.16em] text-balance uppercase transition-colors duration-[300ms] md:text-[0.62rem] ${
+                    isActive
+                      ? 'text-cream'
+                      : 'text-cream/35 group-hover:text-cream/70 group-focus-visible:text-cream/70'
+                  }`}
+                >
+                  {role.title}
+                </span>
+
+                <span
+                  className={`hidden font-mono text-[0.58rem] tracking-[0.1em] whitespace-nowrap transition-colors duration-[300ms] md:block ${
+                    isActive ? 'text-cream/45' : 'text-cream/20'
+                  }`}
+                >
+                  {role.period}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -158,7 +178,11 @@ const RolePanel = ({ role, reduceMotion }) => {
   }
   const item = {
     hidden: { opacity: 0, y: reduceMotion ? 0 : 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE_OUT_EXPO } },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.45, ease: EASE_OUT_EXPO },
+    },
   }
 
   return (
@@ -235,8 +259,14 @@ const RolePanel = ({ role, reduceMotion }) => {
 const CompanyBlock = ({ company }) => {
   // Opens on the newest role — the one a visitor is most likely there for
   const [activeIndex, setActiveIndex] = useState(company.roles.length - 1)
+  const [hasSwitched, setHasSwitched] = useState(false)
   const reduceMotion = useReducedMotion()
   const role = company.roles[activeIndex]
+
+  const onSelect = index => {
+    setActiveIndex(index)
+    setHasSwitched(true)
+  }
 
   return (
     <article>
@@ -248,7 +278,9 @@ const CompanyBlock = ({ company }) => {
           companyName={company.name}
           roles={company.roles}
           activeIndex={activeIndex}
-          onSelect={setActiveIndex}
+          onSelect={onSelect}
+          showHint={!hasSwitched}
+          reduceMotion={reduceMotion}
         />
       )}
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import SkillPill from '../components/SkillPill'
 import Logomark from '../components/Logomark'
+import HintBadge from '../components/HintBadge'
 import { GithubIcon } from '../components/icons'
 import { getSkill } from '../utils/skill-icons'
 import { getCompany } from '../utils/experience'
@@ -139,17 +140,12 @@ const Listing = ({ filter, onFilter, activeId, onSelect, visible }) => {
                   ▸
                 </span>
                 <span className="truncate">{project.id}/</span>
-                <span
-                  className={`ml-auto shrink-0 tabular-nums ${isActive ? 'text-cream/40' : 'text-cream/20'}`}
-                >
-                  {project.year}
-                </span>
                 <Logomark
                   src={company?.logo}
                   alt={company ? `${company.name} logo` : ''}
                   fallback={NAME.charAt(0)}
                   title={company ? company.name : 'Personal project'}
-                  className="size-4 rounded-[0.2rem]"
+                  className="ml-auto size-4 rounded-[0.2rem]"
                   fallbackClassName="text-[0.5rem]"
                   padding="p-px"
                 />
@@ -200,16 +196,38 @@ const Readme = ({ project, reduceMotion }) => {
       </p>
 
       <motion.div variants={list} initial="hidden" animate="show" className="mt-6">
-        <motion.h2 variants={item} className="font-mono text-[0.95rem] text-cream md:text-[1.05rem]">
-          <span className="text-cream/25"># </span>
-          {project.name}
-        </motion.h2>
+        {/* Links sit with the title: a repo is the first thing a reader wants
+            from a personal project, and work entries have none to show */}
+        <motion.div variants={item} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h2 className="font-mono text-[0.95rem] text-cream md:text-[1.05rem]">
+            <span className="text-cream/25"># </span>
+            {project.name}
+          </h2>
+
+          {links.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {links.map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-cream/10 bg-cream/[0.07] px-2.5 py-1 font-mono text-[0.65rem] text-cream/70 transition-colors duration-[250ms] hover:border-cream/25 hover:text-cream"
+                >
+                  <Prompt />
+                  open {label}
+                  <Icon className="block size-3" aria-hidden="true" />
+                </a>
+              ))}
+            </div>
+          )}
+        </motion.div>
 
         <motion.p
           variants={item}
           className="mt-2 font-mono text-[0.62rem] tracking-[0.18em] text-cream/35 uppercase"
         >
-          {project.year} · {sourceLabel(project)}
+          {sourceLabel(project)}
         </motion.p>
 
         {project.summary && (
@@ -249,25 +267,6 @@ const Readme = ({ project, reduceMotion }) => {
           </div>
         </motion.div>
 
-        {/* Links are a personal-project affordance — work entries have nowhere public to point */}
-        {links.length > 0 && (
-          <motion.div variants={item} className="mt-7 flex flex-wrap gap-2 md:gap-3">
-            {links.map(({ href, label, Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-cream/10 bg-cream/[0.07] px-3 py-1.5 font-mono text-[0.72rem] text-cream/70 transition-colors duration-[250ms] hover:border-cream/25 hover:text-cream"
-              >
-                <Prompt />
-                open {label}
-                <Icon className="block size-3" aria-hidden="true" />
-              </a>
-            ))}
-          </motion.div>
-        )}
-
         <motion.p variants={item} className="mt-7 flex items-center gap-2 font-mono text-[0.72rem]">
           <Prompt />
           <Caret />
@@ -280,12 +279,20 @@ const Readme = ({ project, reduceMotion }) => {
 export default function Projects() {
   const [filter, setFilter] = useState('all')
   const [activeId, setActiveId] = useState(projects[0]?.id ?? null)
+  const [hasPicked, setHasPicked] = useState(false)
   const reduceMotion = useReducedMotion()
 
   const visible = useMemo(() => listFor(filter), [filter])
   const active = visible.find(p => p.id === activeId) ?? visible[0]
 
   // Switching flags re-runs ls, so the first entry of the new listing opens
+  // Picking from the listing is the thing the badge teaches, so only that
+  // dismisses it — changing an ls flag does not.
+  const onPick = id => {
+    setActiveId(id)
+    setHasPicked(true)
+  }
+
   const onFilter = next => {
     setFilter(next)
     setActiveId(listFor(next)[0]?.id ?? null)
@@ -294,7 +301,20 @@ export default function Projects() {
   return (
     <section id="projects" className={PAGE}>
       <div className="w-full max-w-4xl">
-        <h1 className={`${PAGE_TITLE} mb-10 md:mb-14`}>Projects</h1>
+        <h1 className={`${PAGE_TITLE} mb-6 md:mb-8`}>Projects</h1>
+
+        <AnimatePresence>
+          {!hasPicked && (
+            <span className="mb-4 block">
+              <HintBadge
+                icon={ArrowDown}
+                label="Pick a project"
+                nudge={{ y: [0, 3, 0] }}
+                reduceMotion={reduceMotion}
+              />
+            </span>
+          )}
+        </AnimatePresence>
 
         <div className="overflow-hidden rounded-2xl border border-cream/12 bg-cream/[0.03]">
           {/* Window bar: monochrome lights, so it reads as a terminal without the costume */}
@@ -317,7 +337,7 @@ export default function Projects() {
               filter={filter}
               onFilter={onFilter}
               activeId={active?.id}
-              onSelect={setActiveId}
+              onSelect={onPick}
               visible={visible}
             />
 
