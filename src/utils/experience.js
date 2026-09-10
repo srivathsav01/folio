@@ -1,3 +1,8 @@
+
+
+
+
+
 // Every company you have worked at, and the roles you held inside each one.
 // Filling this in never means touching the layout.
 //
@@ -9,11 +14,12 @@
 // one the same way it is spelled there and the icon comes along for free. A name
 // that isn't in that list still renders, just without an icon.
 //
-// `logo`: drop a file in src/assets/logos/ and import it at the top of this
-// file, e.g.
-//   import comcastLogo from '../assets/logos/comcast.svg'
-// then set `logo: comcastLogo`. Leave it null and the card falls back to a
+// `logo`: drop a file in src/assets/logos/, import it the way Comcast does
+// below, and hand it to the company. Left null, the tile falls back to a
 // monogram built from the company name.
+//
+// The Projects page reads these same entries, so a company logo is declared
+// once here and shows up on every work project tagged with its id.
 import comcastLogo from '../assets/logos/comcast_logo.png'
 
 export const companies = [
@@ -81,3 +87,6 @@ export const companies = [
     ],
   },
 ]
+
+// Work projects reference a company by id rather than restating its logo
+export const getCompany = id => companies.find(company => company.id === id) ?? null

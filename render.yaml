@@ -1,0 +1,25 @@
+# Render Blueprint. Committing this means the deploy settings live in the repo
+# rather than only in the dashboard.
+#
+# The rewrite is the part that matters: /blog/<slug> is a real URL the router
+# resolves in the browser, but there is no file at that path on disk. Without
+# the rule, opening or refreshing a post URL returns Render's 404 instead of the
+# app. Render does NOT read Netlify-style _redirects files — routes have to be
+# declared here (or under the service's Redirects/Rewrites tab).
+#
+# Every VITE_* value is inlined at build time, not read at runtime, so the build
+# needs them present. .env is git-ignored, which means Render will not see it:
+# set the keys from .env.example in the service's Environment settings, or drop
+# .env from .gitignore since it holds public config rather than secrets.
+# Changing an env var requires a redeploy to take effect.
+
+services:
+  - name: folio
+    type: web
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

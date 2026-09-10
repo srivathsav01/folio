@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import SkillPill from '../components/SkillPill'
 import SectionRule from '../components/SectionRule'
+import Logomark from '../components/Logomark'
 import { getSkill } from '../utils/skill-icons'
 import { companies } from '../utils/experience'
 import { PAGE, PAGE_TITLE } from './page-styles'
@@ -9,29 +10,14 @@ import { PAGE, PAGE_TITLE } from './page-styles'
 // The site's shared reveal curve, in the tuple form framer-motion wants
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1]
 
-// Falls back to a monogram so a company without an artwork file still reads as
-// a mark rather than an empty box.
-const CompanyLogo = ({ company }) => (
-  <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-cream/10 bg-cream/[0.07] md:size-13">
-    {company.logo ? (
-      <img
-        src={company.logo}
-        alt={`${company.name} logo`}
-        className="size-full object-contain p-2"
-        loading="lazy"
-      />
-    ) : (
-      <span aria-hidden="true" className="font-serif text-xl text-cream/70 italic md:text-2xl">
-        {company.name.charAt(0)}
-      </span>
-    )}
-  </span>
-)
-
 const CompanyHeader = ({ company }) => (
   <div className="mb-8 md:mb-10">
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <CompanyLogo company={company} />
+      <Logomark
+        src={company.logo}
+        alt={`${company.name} logo`}
+        fallback={company.name.charAt(0)}
+      />
 
       <div className="min-w-0">
         <h2 className="font-serif text-[1.5rem] leading-tight font-normal tracking-[-0.01em] text-cream italic md:text-[1.85rem]">

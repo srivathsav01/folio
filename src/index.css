@@ -22,6 +22,20 @@
       opacity: 0;
     }
   }
+
+  /* Block cursor for the Projects terminal — hard on/off, never a fade */
+  --animate-caret: caret 1.1s steps(1) infinite;
+
+  @keyframes caret {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
 }
 
 /* Layered scrim that keeps the hero copy legible over the canvas */
@@ -55,10 +69,4 @@
     flex-direction: column;
   }
 
-  /* The custom cursor replaces the native one on pointer-capable screens */
-  @media (width >= 48rem) {
-    * {
-      cursor: none !important;
-    }
-  }
 }
