@@ -5,6 +5,7 @@ summary: A sample post. Delete it once you have written something real — but r
 tags: [meta]
 cover: hello-world.svg
 coverAlt: Concentric rings with a green marker at the centre.
+draft: true
 ---
 
 This file lives at `src/content/blog/hello-world.md`. That is the entire reason
