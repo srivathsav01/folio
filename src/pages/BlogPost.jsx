@@ -130,6 +130,13 @@ const Article = ({ post }) => {
             </p>
           )}
 
+          {/* Above the fold, so it loads eagerly unlike images in the body */}
+          {post.cover && (
+            <figure className="mt-10 overflow-hidden rounded-xl border border-cream/10">
+              <img src={post.cover} alt={post.coverAlt} className="aspect-video w-full object-cover" />
+            </figure>
+          )}
+
           <hr className="mt-10 h-px border-0 bg-cream/12" />
 
           <div className="text-[1rem] md:text-[1.05rem]">
