@@ -44,18 +44,6 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-[0.15rem] md:gap-[0.35rem]">
-        {GITHUB && (
-          <a
-            className={NAV_ACTION}
-            href={GITHUB}
-            target="_blank"
-            rel="noreferrer"
-            data-tip="GitHub"
-            aria-label="GitHub"
-          >
-            <GithubIcon />
-          </a>
-        )}
         {LINKEDIN && (
           <a
             className={NAV_ACTION}
@@ -66,6 +54,18 @@ export default function Navbar() {
             aria-label="LinkedIn"
           >
             <LinkedinIcon />
+          </a>
+        )}
+        {GITHUB && (
+          <a
+            className={NAV_ACTION}
+            href={GITHUB}
+            target="_blank"
+            rel="noreferrer"
+            data-tip="GitHub"
+            aria-label="GitHub"
+          >
+            <GithubIcon />
           </a>
         )}
         {RESUME && (
@@ -101,7 +101,6 @@ export default function Navbar() {
           <ThemeIcon className="block size-4" strokeWidth={1.6} aria-hidden="true" />
         </button>
       </div>
-
       <Toast message="Copied to clipboard" visible={copied} />
     </nav>
   )

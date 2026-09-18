@@ -20,21 +20,6 @@
 
 export const projects = [
   {
-    id: 'mini-queue',
-    name: 'MiniQueue',
-    kind: 'personal',
-    summary: 'A lightweight message broker built from scratch with at-least-once delivery semantics, topic-based fan-out, and explicit consumer acknowledgement.',
-    bullets: [
-      'Inspired by RabbitMQ\'s core concepts — built to understand them from the inside out.',
-      'Designed a PostgreSQL-backed broker with Topic/Queue/Message state-machine modeling, supporting at-least-once delivery, topic-based fan-out, and explicit ack/nack semantics',
-      'Built a configurable redelivery scheduler with retry counting and dead-letter queue routing for messages exceeding max attempts',
-      'Implemented WebSocket-based push delivery alongside a REST API, paired with a React dashboard for real-time queue monitoring',
-    ],
-    stack: ['React', 'Typescript','Java','Spring Boot','PostgreSQL','Docker','Spring Data JPA'],
-    repo: 'https://github.com/srivathsav01/MiniQueue',
-    live: 'https://miniqueue.onrender.com/',
-  },
-  {
     id: 'performance-portal',
     name: 'Performance Portal',
     kind: 'work',
@@ -48,6 +33,21 @@ export const projects = [
       'Co-built an AI agentic system (Spring AI, MCP, GPT-4) that reads Jira tickets and autonomously updates test scripts and triggers runs, cutting manual maintenance time'
     ],
     stack: ['Angular','typescript','Java', 'Spring Boot','InfluxDB','Spring AI','Apache JMeter','Grafana','Kubernetes', 'MySQL'],
+  },
+  {
+    id: 'mini-queue',
+    name: 'MiniQueue',
+    kind: 'personal',
+    summary: 'A lightweight message broker built from scratch with at-least-once delivery semantics, topic-based fan-out, and explicit consumer acknowledgement.',
+    bullets: [
+      'Inspired by RabbitMQ\'s core concepts — built to understand them from the inside out.',
+      'Designed a PostgreSQL-backed broker with Topic/Queue/Message state-machine modeling, supporting at-least-once delivery, topic-based fan-out, and explicit ack/nack semantics',
+      'Built a configurable redelivery scheduler with retry counting and dead-letter queue routing for messages exceeding max attempts',
+      'Implemented WebSocket-based push delivery alongside a REST API, paired with a React dashboard for real-time queue monitoring',
+    ],
+    stack: ['React', 'Typescript','Java','Spring Boot','PostgreSQL','Docker','Spring Data JPA'],
+    repo: 'https://github.com/srivathsav01/MiniQueue',
+    live: 'https://miniqueue.onrender.com/',
   },
   // {
   //   id: 'side-tool',
