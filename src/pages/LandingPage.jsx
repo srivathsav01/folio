@@ -6,6 +6,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import fontData from 'three/examples/fonts/helvetiker_bold.typeface.json'
 
 import { NAME, ROLE, STACK, LOCATION_NOTE } from '../site'
+import { subscribeTheme } from '../utils/theme'
 
 export default function LandingPage() {
   const canvasRef = useRef(null)
@@ -22,13 +23,6 @@ export default function LandingPage() {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(w, h)
-    // Read the ground colour from the theme token rather than repeating the hex,
-    // so the canvas can never drift from the CSS background behind every other
-    // section — a mismatch of even one step is visible at this darkness.
-    const ink = getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-ink')
-      .trim()
-    renderer.setClearColor(new THREE.Color(ink || '#0a0a0a'), 1)
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100)
@@ -45,13 +39,23 @@ export default function LandingPage() {
     textGeo.center()
 
     const wireGeo = new THREE.WireframeGeometry(textGeo)
-    const wireMat = new THREE.LineBasicMaterial({
-      color: 0xf0ede6,
-      transparent: true,
-      opacity: 0.8,
-    })
+    const wireMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.8 })
     const mesh = new THREE.LineSegments(wireGeo, wireMat)
     scene.add(mesh)
+
+    // Read the ground and line colours from the theme tokens rather than
+    // repeating the hex, so the canvas can never drift from the CSS background
+    // behind every other section — a mismatch of even one step is visible. Runs
+    // again whenever the theme is switched.
+    const paint = () => {
+      const tokens = getComputedStyle(document.documentElement)
+      const ink = tokens.getPropertyValue('--color-ink').trim()
+      const cream = tokens.getPropertyValue('--color-cream').trim()
+      renderer.setClearColor(new THREE.Color(ink || '#0a0a0a'), 1)
+      wireMat.color.set(cream || '#f0ede6')
+    }
+    paint()
+    const unsubscribeTheme = subscribeTheme(paint)
 
     // Responsive scale: maps viewport width to a 0.45–1.0 scale range
     const computeScale = () => Math.max(0.45, Math.min(1.0, window.innerWidth / 1200))
@@ -155,6 +159,7 @@ export default function LandingPage() {
 
     return () => {
       clearTimeout(timer)
+      unsubscribeTheme()
 
       canvas.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('pointermove', onPointerMove)

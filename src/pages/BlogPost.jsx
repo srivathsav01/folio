@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useSpring } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import DevCoverEditor from '../components/DevCoverEditor'
 import { FootnoteBackref, FootnoteRef, GlossTerm } from '../components/PostNotes'
 import {
   GLOSS_SCHEME,
@@ -16,7 +17,9 @@ import {
   withGlosses,
   withoutNode,
 } from '../utils/markdown'
+import { framingStyle } from '../utils/cover-framing'
 import { getPost } from '../utils/posts'
+import { coverTransitionName } from '../utils/view-transition'
 import { NAME } from '../site'
 import { PAGE } from './page-styles'
 
@@ -141,6 +144,8 @@ const MARKDOWN = {
 const Article = ({ post }) => {
   // Glosses are rewritten before remark sees the post — see withGlosses
   const body = useMemo(() => withGlosses(post.body), [post.body])
+  // Unsaved framing from the dev cover adjuster; null means "as the file says"
+  const [draft, setDraft] = useState(null)
 
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.3 })
@@ -166,7 +171,8 @@ const Article = ({ post }) => {
       />
 
       <main className={PAGE}>
-        <article className="w-full max-w-[46rem]">
+        {/* data-post tells the opening transition the post has mounted */}
+        <article className="w-full max-w-[46rem]" data-post={post.slug}>
           <Link
             to="/blog"
             className="group inline-flex items-center gap-2 font-mono text-[0.6rem] tracking-[0.24em] text-cream/40 uppercase transition-colors duration-[250ms] hover:text-cream"
@@ -200,10 +206,24 @@ const Article = ({ post }) => {
             </p>
           )}
 
-          {/* Above the fold, so it loads eagerly unlike images in the body */}
+          {/* Above the fold, so it loads eagerly unlike images in the body. It
+              shares a transition name with the cover on the blog front page. */}
           {post.cover && (
-            <figure className="mt-10 overflow-hidden rounded-xl border border-cream/10">
-              <img src={post.cover} alt={post.coverAlt} className="aspect-video w-full object-cover" />
+            <figure
+              className="relative mt-10 overflow-hidden rounded-xl border border-cream/10"
+              style={{ viewTransitionName: coverTransitionName(post.slug) }}
+            >
+              <img
+                src={post.cover}
+                alt={post.coverAlt}
+                style={framingStyle(draft ?? post.framing)}
+                className="aspect-video w-full object-cover"
+              />
+              <DevCoverEditor
+                file={post.source}
+                framing={draft ?? post.framing}
+                onChange={setDraft}
+              />
             </figure>
           )}
 

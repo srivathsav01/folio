@@ -5,7 +5,7 @@ const TOAST = [
   'md:right-6 md:bottom-[calc(1.5rem_+_env(safe-area-inset-bottom,0px))]',
   'rounded-[0.7rem] border border-cream/15 bg-cream/[0.09] px-[0.9rem] py-[0.6rem]',
   'font-mono text-[0.6rem] tracking-[0.12em] text-cream uppercase',
-  'shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-[24px] backdrop-saturate-[180%]',
+  'shadow-[0_8px_32px_color-mix(in_oklab,var(--color-shade)_50%,transparent)] backdrop-blur-[24px] backdrop-saturate-[180%]',
   'transition-[opacity,translate,visibility] duration-300 ease-out-expo',
 ].join(' ')
 

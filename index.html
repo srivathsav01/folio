@@ -22,6 +22,16 @@
     <meta name="twitter:title" content="%VITE_SITE_TITLE%" />
     <meta name="twitter:description" content="%VITE_NAME% — %VITE_ROLE%. %VITE_STACK%." />
     <meta name="twitter:image" content="%VITE_SITE_URL%/og.png?v=1" />
+    <!-- Applies the saved theme before first paint (see src/utils/theme.js).
+         Dark is the default; light only when the visitor has chosen it. -->
+    <script>
+      try {
+        if (localStorage.getItem('theme') === 'light') {
+          document.documentElement.dataset.theme = 'light'
+          document.querySelector('meta[name="theme-color"]').content = '#f3f0e8'
+        }
+      } catch (e) {}
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Space+Mono&display=swap" rel="stylesheet">
   </head>
   <body>

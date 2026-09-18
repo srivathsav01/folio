@@ -78,7 +78,7 @@ export default function Dock() {
   const asideItems = visible.filter(i => !i.scroll)
 
   return (
-    <nav className="fixed bottom-[calc(1rem_+_env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex -translate-x-1/2 items-center gap-[0.15rem] rounded-[0.95rem] border border-cream/15 bg-cream/[0.07] p-[0.3rem] shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(240,237,230,0.14)] backdrop-blur-[24px] backdrop-saturate-[180%] md:bottom-[calc(1.5rem_+_env(safe-area-inset-bottom,0px))]">
+    <nav className="fixed bottom-[calc(1rem_+_env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex -translate-x-1/2 items-center gap-[0.15rem] rounded-[0.95rem] border border-cream/15 bg-cream/[0.07] p-[0.3rem] shadow-[0_8px_32px_color-mix(in_oklab,var(--color-shade)_50%,transparent),inset_0_1px_0_rgba(240,237,230,0.14)] backdrop-blur-[24px] backdrop-saturate-[180%] md:bottom-[calc(1.5rem_+_env(safe-area-inset-bottom,0px))]">
       {scrollItems.map(item => (
         <DockItem key={item.to} item={item} />
       ))}

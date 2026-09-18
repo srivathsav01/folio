@@ -17,7 +17,7 @@ const CLOSE_DELAY = 180
 const PANEL = [
   'pointer-events-auto fixed z-[150] w-[min(23rem,calc(100vw-1.5rem))]',
   'rounded-xl border border-cream/15 bg-ink/95 px-4 py-3.5',
-  'shadow-[0_18px_48px_rgba(0,0,0,0.6)] backdrop-blur-[20px] backdrop-saturate-[160%]',
+  'shadow-[0_18px_48px_color-mix(in_oklab,var(--color-shade)_60%,transparent)] backdrop-blur-[20px] backdrop-saturate-[160%]',
 ].join(' ')
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)

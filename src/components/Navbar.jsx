@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FileDown, Mail } from 'lucide-react'
+import { FileDown, Mail, Moon, Sun } from 'lucide-react'
 import Toast from './Toast'
 import { GithubIcon, LinkedinIcon } from './icons'
 import { GITHUB, LINKEDIN, RESUME, RESUME_FILENAME, EMAIL } from '../site'
+import { setTheme, useTheme } from '../utils/theme'
 
 // The label under each icon is drawn from data-tip via a ::after pseudo-element
 const NAV_ACTION = [
@@ -18,6 +19,9 @@ const NAV_ACTION = [
 
 export default function Navbar() {
   const [copied, setCopied] = useState(false)
+  const theme = useTheme()
+  const nextTheme = theme === 'dark' ? 'light' : 'dark'
+  const ThemeIcon = theme === 'dark' ? Sun : Moon
 
   const copyEmail = async () => {
     try {
@@ -86,6 +90,16 @@ export default function Navbar() {
             <Mail className="block size-4" strokeWidth={1.6} aria-hidden="true" />
           </button>
         )}
+        {/* Shows the mode it switches to, not the one you're in */}
+        <button
+          type="button"
+          className={NAV_ACTION}
+          onClick={() => setTheme(nextTheme)}
+          data-tip={`${nextTheme} mode`}
+          aria-label={`Switch to ${nextTheme} mode`}
+        >
+          <ThemeIcon className="block size-4" strokeWidth={1.6} aria-hidden="true" />
+        </button>
       </div>
 
       <Toast message="Copied to clipboard" visible={copied} />

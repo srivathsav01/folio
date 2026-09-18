@@ -52,7 +52,7 @@ const RailNode = ({ role, isActive, isPast }) => (
         role.current && isActive
           ? 'bg-signal shadow-[0_0_10px_2px_rgba(34,197,94,0.55)]'
           : isActive
-            ? 'bg-cream shadow-[0_0_10px_2px_rgba(240,237,230,0.35)]'
+            ? 'bg-cream shadow-[0_0_10px_2px_color-mix(in_oklab,var(--color-cream)_35%,transparent)]'
             : isPast
               ? 'bg-cream/45'
               : 'bg-cream/20'

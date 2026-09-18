@@ -12,6 +12,8 @@
 //   tags: [java, testing]
 //   cover: my-photo.jpg
 //   coverAlt: What the photo shows, for screen readers.
+//   coverFocus: 50% 30%
+//   coverZoom: 1.2
 //   draft: false
 //   ---
 //
@@ -24,6 +26,11 @@
 //
 // Every frontmatter key is optional except `title` and `date`. Drafts are
 // visible while running `npm run dev` and dropped from the built site.
+//
+// `coverFocus` and `coverZoom` frame the cover: the point that stays in view
+// when it's cropped, and how far it's zoomed in. There's no need to write them
+// by hand — under `npm run dev` the cover has an Adjust button that lets you
+// drag and zoom it in place and saves both keys back into the file.
 //
 // Two ways to explain a word inside a post:
 //
@@ -48,6 +55,8 @@
 //      and the arrow beside the reference scrolls back. Standard GFM footnotes,
 //      so the definition can sit anywhere in the file and hold links, lists or
 //      several paragraphs (indent continuation lines by two spaces).
+
+import { parseFraming } from './cover-framing'
 
 const files = import.meta.glob('../content/blog/*.md', {
   query: '?raw',
@@ -149,6 +158,9 @@ export const posts = Object.entries(files)
       tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
       cover: resolveCover(data.cover),
       coverAlt: data.coverAlt || data.title || '',
+      framing: parseFraming(data.coverFocus, data.coverZoom),
+      // The dev-only cover adjuster saves back into this file
+      source: import.meta.env.DEV ? path.split('/').pop() : undefined,
       draft: String(data.draft) === 'true',
       date,
       dateLabel: formatDate(date),

@@ -6,6 +6,8 @@
   --color-cream: #f0ede6;
   --color-signal: #22c55e;
   --color-signal-soft: #7cd992;
+  /* Drop shadows; translucent in light mode so they read as soft, not sooty */
+  --color-shade: #000;
 
   --font-serif: 'IM Fell English', Georgia, serif;
   --font-mono: 'Space Mono', monospace;
@@ -39,6 +41,28 @@
 }
 
 @layer base {
+  /* Light mode swaps the two base colours, so every ink/cream utility (and
+     its opacity steps) flips with it. The greens darken to hold contrast on a
+     pale ground. Toggled from the navbar — see src/utils/theme.js. */
+  :root[data-theme='light'] {
+    --color-ink: #f3f0e8;
+    --color-cream: #1a1814;
+    --color-signal: #16a34a;
+    --color-signal-soft: #15803d;
+    --color-shade: rgb(60 50 35 / 0.4);
+    color-scheme: light;
+  }
+
+  /* Pins a subtree to the dark palette whatever the page theme. Type set on a
+     photo reads best light-on-dark in both modes, so the lead cover on /blog
+     keeps its dark scrim instead of flipping to a pale wash. Mirrors @theme. */
+  .theme-dark {
+    --color-ink: #0a0a0a;
+    --color-cream: #f0ede6;
+    --color-signal: #22c55e;
+    --color-signal-soft: #7cd992;
+  }
+
   html {
     color-scheme: dark;
     font-synthesis: none;
@@ -78,5 +102,56 @@
   100% {
     background-color: transparent;
     box-shadow: 0 0 0 0.45rem transparent;
+  }
+}
+
+/* Opening a post (see src/utils/view-transition.js): the shared cover morphs
+   from its place on the blog page to the top of the post while the rest of
+   the page fades out and the post rises in behind it. */
+::view-transition-group(*) {
+  animation-duration: 650ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+/* A square thumbnail growing into a 16:9 cover crops instead of stretching */
+::view-transition-old(*),
+::view-transition-new(*) {
+  height: 100%;
+  object-fit: cover;
+}
+
+::view-transition-old(root) {
+  animation: 250ms ease-out both vt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 550ms var(--ease-out-expo) 120ms both vt-rise-in;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Switching theme: a plain crossfade, overriding the post-opening animation */
+:root[data-transition='theme']::view-transition-old(root) {
+  animation: 350ms ease both vt-fade-out;
+}
+
+:root[data-transition='theme']::view-transition-new(root) {
+  animation: 350ms ease both vt-fade-in;
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
   }
 }
