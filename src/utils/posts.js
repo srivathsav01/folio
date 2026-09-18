@@ -24,6 +24,30 @@
 //
 // Every frontmatter key is optional except `title` and `date`. Drafts are
 // visible while running `npm run dev` and dropped from the built site.
+//
+// Two ways to explain a word inside a post:
+//
+//   1. A hover gloss, explained in place and nowhere else:
+//
+//        Rome's metro is a [strangler fig]{Build the new system around the old
+//        one, then retire the old one piece by piece.} in concrete.
+//
+//      The term gets a dotted underline; hover, tap or tab to it for a pop-up.
+//      Reuse it later with empty braces — `[strangler fig]{}` — and the same
+//      explanation comes back. An explanation can hold links, `code` or
+//      emphasis; the first `}` ends it. See withGlosses in src/utils/markdown.js.
+//
+//   2. A numbered reference, listed under References at the foot of the post:
+//
+//        The instinct is to call this pathfinding[^astar] around obstacles.
+//
+//        [^astar]: A* with a fixed maze is the classic version: the whole graph
+//          is known before the search starts.
+//
+//      Hovering the number previews the reference, clicking scrolls down to it,
+//      and the arrow beside the reference scrolls back. Standard GFM footnotes,
+//      so the definition can sit anywhere in the file and hold links, lists or
+//      several paragraphs (indent continuation lines by two spaces).
 
 const files = import.meta.glob('../content/blog/*.md', {
   query: '?raw',

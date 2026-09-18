@@ -1,9 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useSpring } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { FootnoteBackref, FootnoteRef, GlossTerm } from '../components/PostNotes'
+import {
+  GLOSS_SCHEME,
+  glossNote,
+  isFootnoteBackref,
+  isFootnoteRef,
+  isFootnotesSection,
+  isGloss,
+  joinClasses,
+  withGlosses,
+  withoutNode,
+} from '../utils/markdown'
 import { getPost } from '../utils/posts'
 import { NAME } from '../site'
 import { PAGE } from './page-styles'
@@ -12,34 +24,89 @@ import { PAGE } from './page-styles'
 // IM Fell is a display serif and tiring across a long read.
 const HEADING = 'font-serif font-normal italic text-cream tracking-[-0.01em]'
 
+// remark-gfm titles the footnote list "Footnotes" and hides the heading from
+// sighted readers; a post's notes read as references, so they get a real one.
+const REMARK_REHYPE = {
+  footnoteLabel: 'References',
+  footnoteLabelProperties: {},
+  footnoteBackContent: '↩',
+  footnoteBackLabel: (reference, repeat) =>
+    `Back to reference ${reference + 1}${repeat > 1 ? `-${repeat}` : ''}`,
+}
+
+// react-markdown drops link destinations whose scheme it does not know, which
+// would take a gloss's explanation with it
+const urlTransform = url => (url.startsWith(GLOSS_SCHEME) ? url : defaultUrlTransform(url))
+
 const MARKDOWN = {
   // A post's own h1 would duplicate the title above it, so it renders as an h2
-  h1: props => <h2 className={`${HEADING} mt-12 mb-4 text-[1.75rem] md:text-[2rem]`} {...props} />,
-  h2: props => <h2 className={`${HEADING} mt-12 mb-4 text-[1.5rem] md:text-[1.75rem]`} {...props} />,
-  h3: props => <h3 className={`${HEADING} mt-9 mb-3 text-[1.2rem] md:text-[1.35rem]`} {...props} />,
-  h4: props => <h4 className={`${HEADING} mt-8 mb-3 text-[1.05rem]`} {...props} />,
+  h1: props => <h2 className={`${HEADING} mt-12 mb-4 text-[1.75rem] md:text-[2rem]`} {...withoutNode(props)} />,
+  h2: props => <h2 className={`${HEADING} mt-12 mb-4 text-[1.5rem] md:text-[1.75rem]`} {...withoutNode(props)} />,
+  h3: props => <h3 className={`${HEADING} mt-9 mb-3 text-[1.2rem] md:text-[1.35rem]`} {...withoutNode(props)} />,
+  h4: props => <h4 className={`${HEADING} mt-8 mb-3 text-[1.05rem]`} {...withoutNode(props)} />,
 
-  p: props => <p className="my-5 leading-[1.85] text-cream/75" {...props} />,
+  p: props => <p className="my-5 leading-[1.85] text-cream/75" {...withoutNode(props)} />,
 
-  a: props => (
-    <a
-      className="text-cream underline decoration-cream/30 underline-offset-4 transition-colors duration-[250ms] hover:decoration-cream"
-      target={props.href?.startsWith('http') ? '_blank' : undefined}
-      rel={props.href?.startsWith('http') ? 'noreferrer' : undefined}
-      {...props}
-    />
-  ),
+  // Three kinds of anchor arrive here: a gloss, the two ends of a footnote,
+  // and an ordinary link
+  a: props => {
+    if (isGloss(props)) return <GlossTerm note={glossNote(props.href)}>{props.children}</GlossTerm>
 
-  ul: props => <ul className="my-5 flex list-disc flex-col gap-2 pl-5 marker:text-cream/25" {...props} />,
+    if (isFootnoteRef(props))
+      return (
+        <FootnoteRef href={props.href} id={props.id}>
+          {props.children}
+        </FootnoteRef>
+      )
+
+    if (isFootnoteBackref(props))
+      return (
+        <FootnoteBackref href={props.href} label={props['aria-label']}>
+          {props.children}
+        </FootnoteBackref>
+      )
+
+    return (
+      <a
+        className="text-cream underline decoration-cream/30 underline-offset-4 transition-colors duration-[250ms] hover:decoration-cream"
+        target={props.href?.startsWith('http') ? '_blank' : undefined}
+        rel={props.href?.startsWith('http') ? 'noreferrer' : undefined}
+        {...withoutNode(props)}
+      />
+    )
+  },
+
+  sup: props => <sup className="top-[-0.35em] text-[0.74em] leading-none" {...withoutNode(props)} />,
+
+  // The References block remark-gfm appends when a post uses footnotes. It
+  // arrives with a className of its own, so ours is merged in rather than set.
+  section: props => {
+    const { className, ...rest } = withoutNode(props)
+    if (!isFootnotesSection(props)) return <section className={className} {...rest} />
+
+    return (
+      <section
+        className={joinClasses(
+          className,
+          'mt-14 border-t border-cream/12 pt-2',
+          '[&_li]:text-[0.92rem] [&_li]:text-cream/65 [&_ol]:gap-3 [&_ol]:pl-6',
+          '[&_p]:my-0 [&_p]:text-[0.92rem] [&_p]:leading-[1.7]',
+        )}
+        {...rest}
+      />
+    )
+  },
+
+  ul: props => <ul className="my-5 flex list-disc flex-col gap-2 pl-5 marker:text-cream/25" {...withoutNode(props)} />,
   ol: props => (
-    <ol className="my-5 flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-[0.8em] marker:text-cream/30" {...props} />
+    <ol className="my-5 flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-[0.8em] marker:text-cream/30" {...withoutNode(props)} />
   ),
-  li: props => <li className="leading-[1.8] text-cream/75" {...props} />,
+  li: props => <li className="leading-[1.8] text-cream/75" {...withoutNode(props)} />,
 
   blockquote: props => (
     <blockquote
       className="my-7 border-l border-cream/20 pl-5 font-serif text-[1.1rem] leading-relaxed text-cream/60 italic [&>p]:my-0"
-      {...props}
+      {...withoutNode(props)}
     />
   ),
 
@@ -47,31 +114,34 @@ const MARKDOWN = {
   pre: props => (
     <pre
       className="my-7 overflow-x-auto rounded-xl border border-cream/10 bg-cream/[0.05] p-4 font-mono text-[0.78rem] leading-relaxed text-cream/80 [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-inherit"
-      {...props}
+      {...withoutNode(props)}
     />
   ),
   code: props => (
-    <code className="rounded bg-cream/10 px-1.5 py-0.5 font-mono text-[0.85em] text-cream" {...props} />
+    <code className="rounded bg-cream/10 px-1.5 py-0.5 font-mono text-[0.85em] text-cream" {...withoutNode(props)} />
   ),
 
-  img: props => <img className="my-7 w-full rounded-xl border border-cream/10" loading="lazy" {...props} />,
+  img: props => <img className="my-7 w-full rounded-xl border border-cream/10" loading="lazy" {...withoutNode(props)} />,
   hr: () => <hr className="my-10 h-px border-0 bg-cream/12" />,
 
   table: props => (
     <div className="my-7 overflow-x-auto">
-      <table className="w-full border-collapse text-left text-[0.9rem]" {...props} />
+      <table className="w-full border-collapse text-left text-[0.9rem]" {...withoutNode(props)} />
     </div>
   ),
   th: props => (
     <th
       className="border-b border-cream/15 px-3 py-2 font-mono text-[0.6rem] tracking-[0.18em] text-cream/50 uppercase"
-      {...props}
+      {...withoutNode(props)}
     />
   ),
-  td: props => <td className="border-b border-cream/8 px-3 py-2 text-cream/75" {...props} />,
+  td: props => <td className="border-b border-cream/8 px-3 py-2 text-cream/75" {...withoutNode(props)} />,
 }
 
 const Article = ({ post }) => {
+  // Glosses are rewritten before remark sees the post — see withGlosses
+  const body = useMemo(() => withGlosses(post.body), [post.body])
+
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.3 })
 
@@ -140,8 +210,13 @@ const Article = ({ post }) => {
           <hr className="mt-10 h-px border-0 bg-cream/12" />
 
           <div className="text-[1rem] md:text-[1.05rem]">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN}>
-              {post.body}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              remarkRehypeOptions={REMARK_REHYPE}
+              urlTransform={urlTransform}
+              components={MARKDOWN}
+            >
+              {body}
             </ReactMarkdown>
           </div>
 

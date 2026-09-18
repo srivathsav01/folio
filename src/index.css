@@ -61,4 +61,22 @@
     flex-direction: column;
   }
 
+  /* Jumping between a footnote number and its reference moves the page under
+     the reader, so the landing spot glows once to say "here". */
+  .note-flash {
+    border-radius: 0.3rem;
+    animation: note-flash 1.9s var(--ease-out-expo);
+  }
+}
+
+@keyframes note-flash {
+  0%,
+  30% {
+    background-color: color-mix(in oklab, var(--color-cream) 14%, transparent);
+    box-shadow: 0 0 0 0.45rem color-mix(in oklab, var(--color-cream) 14%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0.45rem transparent;
+  }
 }
