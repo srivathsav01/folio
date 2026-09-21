@@ -18,7 +18,7 @@ import {
   withoutNode,
 } from '../utils/markdown'
 import { framingStyle } from '../utils/cover-framing'
-import { getPost } from '../utils/posts'
+import { getPost, resolveImage } from '../utils/posts'
 import { coverTransitionName } from '../utils/view-transition'
 import { NAME } from '../site'
 import { PAGE } from './page-styles'
@@ -41,6 +41,12 @@ const REMARK_REHYPE = {
 // would take a gloss's explanation with it
 const urlTransform = url => (url.startsWith(GLOSS_SCHEME) ? url : defaultUrlTransform(url))
 
+// The <img> element when a paragraph holds nothing else, ignoring whitespace
+const soleImage = node => {
+  const children = node?.children?.filter(child => child.type !== 'text' || child.value.trim()) ?? []
+  return children.length === 1 && children[0].tagName === 'img' ? children[0] : null
+}
+
 const MARKDOWN = {
   // A post's own h1 would duplicate the title above it, so it renders as an h2
   h1: props => <h2 className={`${HEADING} mt-12 mb-4 text-[1.75rem] md:text-[2rem]`} {...withoutNode(props)} />,
@@ -48,7 +54,23 @@ const MARKDOWN = {
   h3: props => <h3 className={`${HEADING} mt-9 mb-3 text-[1.2rem] md:text-[1.35rem]`} {...withoutNode(props)} />,
   h4: props => <h4 className={`${HEADING} mt-8 mb-3 text-[1.05rem]`} {...withoutNode(props)} />,
 
-  p: props => <p className="my-5 leading-[1.85] text-cream/75" {...withoutNode(props)} />,
+  // An image on a line of its own becomes a figure, its alt text the caption.
+  // Swapped for the paragraph rather than nested in it: a <figure> can't sit in a <p>.
+  p: props => {
+    const image = soleImage(props.node)
+    if (!image) return <p className="my-5 leading-[1.85] text-cream/75" {...withoutNode(props)} />
+
+    return (
+      <figure className="my-7">
+        {props.children}
+        {image.properties.alt && (
+          <figcaption className="mt-3 text-center text-[0.85rem] leading-relaxed text-cream/50 italic">
+            {image.properties.alt}
+          </figcaption>
+        )}
+      </figure>
+    )
+  },
 
   // Three kinds of anchor arrive here: a gloss, the two ends of a footnote,
   // and an ordinary link
@@ -124,7 +146,14 @@ const MARKDOWN = {
     <code className="rounded bg-cream/10 px-1.5 py-0.5 font-mono text-[0.85em] text-cream" {...withoutNode(props)} />
   ),
 
-  img: props => <img className="my-7 w-full rounded-xl border border-cream/10" loading="lazy" {...withoutNode(props)} />,
+  img: props => (
+    <img
+      className="w-full rounded-xl border border-cream/10 [p>&]:my-7"
+      loading="lazy"
+      {...withoutNode(props)}
+      src={resolveImage(props.src)}
+    />
+  ),
   hr: () => <hr className="my-10 h-px border-0 bg-cream/12" />,
 
   table: props => (

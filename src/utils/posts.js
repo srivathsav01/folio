@@ -64,9 +64,10 @@ const files = import.meta.glob('../content/blog/*.md', {
   eager: true,
 })
 
-// Cover images live beside the posts, in src/content/blog/images/. Dropping a
-// file there and naming it in a post's `cover:` is all it takes — Vite hashes
-// and fingerprints it like any other asset.
+// Images live beside the posts, in src/content/blog/images/. Dropping a file
+// there and naming it in a post's `cover:`, or in the body as
+// `![alt](images/photo.jpg)`, is all it takes — Vite hashes and fingerprints it
+// like any other asset.
 const images = import.meta.glob('../content/blog/images/*', {
   query: '?url',
   import: 'default',
@@ -77,9 +78,10 @@ const imageByName = new Map(
   Object.entries(images).map(([path, url]) => [path.split('/').pop(), url]),
 )
 
-// `cover: photo.jpg` resolves against that folder. A full URL is left alone, and
-// a leading slash means "already in public/", which needs the base path applied.
-const resolveCover = value => {
+// `photo.jpg` or `images/photo.jpg` resolves against that folder. A full URL is
+// left alone, and a leading slash means "already in public/", which needs the
+// base path applied.
+export const resolveImage = value => {
   if (!value) return ''
   if (/^https?:\/\//.test(value)) return value
   if (value.startsWith('/')) return import.meta.env.BASE_URL.replace(/\/$/, '') + value
@@ -156,7 +158,7 @@ export const posts = Object.entries(files)
       title: data.title || fallbackSlug,
       summary: data.summary || '',
       tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
-      cover: resolveCover(data.cover),
+      cover: resolveImage(data.cover),
       coverAlt: data.coverAlt || data.title || '',
       framing: parseFraming(data.coverFocus, data.coverZoom),
       // The dev-only cover adjuster saves back into this file
