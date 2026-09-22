@@ -20,6 +20,13 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
     routes:
+      # Link previews: the build writes dist/blog/<slug>/index.html with the
+      # post's title and cover (see postPreviews in vite.config.js), but Render
+      # only finds it for /blog/<slug>/ — the slash-less URL people share would
+      # fall through to the catch-all below and get the site-wide card.
+      - type: rewrite
+        source: /blog/:slug
+        destination: /blog/:slug/index.html
       - type: rewrite
         source: /*
         destination: /index.html
