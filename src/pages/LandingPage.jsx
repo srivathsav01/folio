@@ -5,7 +5,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import fontData from 'three/examples/fonts/helvetiker_bold.typeface.json'
 
-import { NAME, ROLE, STACK, LOCATION_NOTE } from '../site'
+import { NAME, ROLE, STACK, LOCATION_NOTE, OPEN_TO_WORK } from '../site'
 import { subscribeTheme } from '../utils/theme'
 
 export default function LandingPage() {
@@ -206,7 +206,7 @@ export default function LandingPage() {
           >
             {STACK}
           </p>
-          {LOCATION_NOTE && (
+          {OPEN_TO_WORK && LOCATION_NOTE && (
             <p
               className={`flex max-w-[32ch] font-mono text-[0.75rem] leading-relaxed tracking-[0.08em] text-cream/55 md:text-[0.82rem] ${rise('delay-700', 'translate-y-5')}`}
             >
