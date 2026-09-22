@@ -1,6 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { createHash } from 'node:crypto'
+import sharp from 'sharp'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -109,12 +111,43 @@ const setMeta = (html, key, value) =>
     (_, open, close) => open + escapeAttr(value) + close,
   )
 
-const dropMeta = (html, key) => html.replace(new RegExp(`\\s*<meta property="${key}" content="[^"]*" />`), '')
+// The card is cropped the way the page frames the cover — object-fit: cover at
+// the coverFocus point, then coverZoom scaled around that same point (see
+// src/utils/cover-framing.js) — only into the 1.91:1 box scrapers show.
+const OG_WIDTH = 1200
+const OG_HEIGHT = 630
+
+const clampTo = (value, min, max) => Math.min(max, Math.max(min, value))
+
+const cropRegion = (width, height, post) => {
+  const [x = 50, y = 50] = (post.coverFocus?.match(/-?\d+(\.\d+)?/g) ?? []).map(n => clampTo(Number(n), 0, 100))
+  const zoom = clampTo(Number(post.coverZoom) || 1, 1, 3)
+
+  // Image pixels per box pixel, after object-fit: cover and the zoom
+  const scale = Math.max(OG_WIDTH / width, OG_HEIGHT / height) * zoom
+  const cropWidth = Math.min(width, Math.round(OG_WIDTH / scale))
+  const cropHeight = Math.min(height, Math.round(OG_HEIGHT / scale))
+
+  // object-position puts the focus point at the same percentage of the box,
+  // and a zoom around that point keeps it there
+  return {
+    left: Math.round((width - cropWidth) * (x / 100)),
+    top: Math.round((height - cropHeight) * (y / 100)),
+    width: cropWidth,
+    height: cropHeight,
+  }
+}
+
+const writeCard = async (source, target, post) => {
+  const image = sharp(source)
+  const { width, height } = await image.metadata()
+  await image.extract(cropRegion(width, height, post)).resize(OG_WIDTH, OG_HEIGHT).jpeg({ quality: 85 }).toFile(target)
+}
 
 const postPreviews = env => ({
   name: 'post-link-previews',
   apply: 'build',
-  closeBundle() {
+  async closeBundle() {
     const root = import.meta.dirname
     const dist = resolve(root, 'dist')
     const postsDir = resolve(root, 'src/content/blog')
@@ -145,16 +178,16 @@ const postPreviews = env => ({
       const cover = post.cover && !/^https?:|^\//.test(post.cover) ? post.cover.split('/').pop() : ''
       const ext = cover.split('.').pop().toLowerCase()
       if (OG_TYPES[ext] && existsSync(resolve(postsDir, 'images', cover))) {
-        // A stable, unhashed URL: scrapers cache previews by image address
+        // A stable, unhashed URL: scrapers cache previews by image address, so
+        // the ?v= changes with the framing to make them fetch a re-cropped card
         mkdirSync(resolve(dist, 'og'), { recursive: true })
-        copyFileSync(resolve(postsDir, 'images', cover), resolve(dist, 'og', `${slug}.${ext}`))
-        const image = `${site}/og/${slug}.${ext}`
+        await writeCard(resolve(postsDir, 'images', cover), resolve(dist, 'og', `${slug}.jpg`), post)
+        const version = createHash('md5').update(`${post.coverFocus}|${post.coverZoom}`).digest('hex').slice(0, 8)
+        const image = `${site}/og/${slug}.jpg?v=${version}`
 
         for (const key of ['og:image', 'twitter:image']) html = setMeta(html, key, image)
-        html = setMeta(html, 'og:image:type', OG_TYPES[ext])
+        html = setMeta(html, 'og:image:type', 'image/jpeg')
         html = setMeta(html, 'og:image:alt', post.coverAlt || post.title)
-        // The site card's 1200×630 no longer applies, and scrapers measure it themselves
-        html = dropMeta(dropMeta(html, 'og:image:width'), 'og:image:height')
       }
 
       mkdirSync(resolve(dist, 'blog', slug), { recursive: true })
