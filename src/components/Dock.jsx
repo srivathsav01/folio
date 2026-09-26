@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { Briefcase, CodeXml, FileText, LayoutGrid } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { Briefcase, CodeXml, FileText, LayoutGrid, Pause, Play, Square } from 'lucide-react'
 import { OPEN_TO_WORK, OPEN_TO_WORK_LABEL, SHOW_BLOG } from '../site'
+import { useDockPlayer } from '../utils/dock-player'
 
 // `scroll: false` keeps Blog out of the stacked one-page scroll
 const ITEMS = [
@@ -72,6 +74,65 @@ const Divider = () => (
   <span className="mx-[0.25rem] my-[0.3rem] w-px self-stretch bg-cream/15" />
 )
 
+const CONTROL = [
+  'relative flex h-[1.9rem] items-center rounded-[0.65rem] px-[0.45rem] text-cream transition-colors duration-[250ms] hover:bg-cream/10 md:h-8 md:px-2',
+  'focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-cream/60',
+  TOOLTIP,
+].join(' ')
+
+// A post's pause and stop, here while the post is being read and its own
+// player is scrolled out of sight (see src/utils/dock-player.js). Clipped
+// while it slides open, then unclipped so the tooltips can rise above it.
+function ListeningControls() {
+  const player = useDockPlayer()
+  const reduceMotion = useReducedMotion()
+  const playing = player?.state === 'playing'
+  const toggleLabel = playing ? 'Pause reading' : 'Resume reading'
+  const ToggleIcon = playing ? Pause : Play
+
+  return (
+    <AnimatePresence initial={false}>
+      {player && (
+        <motion.div
+          key="listening"
+          role="group"
+          aria-label="Read aloud"
+          className="flex items-center gap-[0.15rem] self-stretch"
+          style={{ overflow: 'hidden' }}
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
+          exit={{ width: 0, opacity: 0, overflow: 'hidden' }}
+          transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Divider />
+          <button
+            type="button"
+            className={CONTROL}
+            aria-label={toggleLabel}
+            data-tip={toggleLabel}
+            onClick={player.toggle}
+          >
+            <ToggleIcon
+              className={`size-[1.05rem] shrink-0 ${playing ? 'text-signal' : 'opacity-60'}`}
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            type="button"
+            className={CONTROL}
+            aria-label="Stop reading"
+            data-tip="Stop reading"
+            onClick={player.stop}
+          >
+            <Square className="size-[0.95rem] shrink-0 opacity-60" strokeWidth={1.5} aria-hidden="true" />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 export default function Dock() {
   const visible = ITEMS.filter(i => i.scroll || SHOW_BLOG)
   const scrollItems = visible.filter(i => i.scroll)
@@ -109,6 +170,8 @@ export default function Dock() {
           </div>
         </>
       )}
+
+      <ListeningControls />
     </nav>
   )
 }

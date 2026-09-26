@@ -155,3 +155,20 @@
     opacity: 0;
   }
 }
+
+/* The sentence being read aloud (src/components/ReadAloud.jsx). A highlight
+   paints over the text without adding elements, so links and line breaks in
+   the post stay exactly as they were. */
+::highlight(read-aloud) {
+  background-color: color-mix(in oklab, var(--color-cream) 16%, transparent);
+  color: var(--color-cream);
+}
+
+/* While listening, the sentence under the mouse, which a click jumps to */
+::highlight(read-aloud-hover) {
+  background-color: color-mix(in oklab, var(--color-cream) 7%, transparent);
+}
+
+[data-read-aloud-target] {
+  cursor: pointer;
+}

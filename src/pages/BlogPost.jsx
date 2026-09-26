@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useSpring } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import DevCoverEditor from '../components/DevCoverEditor'
+import ReadAloud from '../components/ReadAloud'
 import { FootnoteBackref, FootnoteRef, GlossTerm } from '../components/PostNotes'
 import {
   GLOSS_SCHEME,
@@ -175,6 +176,7 @@ const Article = ({ post }) => {
   const body = useMemo(() => withGlosses(post.body), [post.body])
   // Unsaved framing from the dev cover adjuster; null means "as the file says"
   const [draft, setDraft] = useState(null)
+  const articleRef = useRef(null)
 
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.3 })
@@ -200,10 +202,13 @@ const Article = ({ post }) => {
       />
 
       <main className={PAGE}>
-        {/* data-post tells the opening transition the post has mounted */}
-        <article className="w-full max-w-[46rem]" data-post={post.slug}>
+        {/* data-post tells the opening transition the post has mounted.
+            data-read-aloud-skip keeps page furniture out of the read-aloud,
+            and data-read-aloud-quiet reads a part without highlighting it. */}
+        <article ref={articleRef} className="w-full max-w-[46rem]" data-post={post.slug}>
           <Link
             to="/blog"
+            data-read-aloud-skip=""
             className="group inline-flex items-center gap-2 font-mono text-[0.6rem] tracking-[0.24em] text-cream/40 uppercase transition-colors duration-[250ms] hover:text-cream"
           >
             <ArrowLeft
@@ -214,7 +219,7 @@ const Article = ({ post }) => {
             All posts
           </Link>
 
-          <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6rem] tracking-[0.2em] text-cream/40 uppercase">
+          <div data-read-aloud-skip="" className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6rem] tracking-[0.2em] text-cream/40 uppercase">
             <span>{post.dateLabel}</span>
             <span className="text-cream/15">·</span>
             <span>{post.readingTime} min</span>
@@ -225,15 +230,17 @@ const Article = ({ post }) => {
             ))}
           </div>
 
-          <h1 className="mt-4 font-serif text-[clamp(2rem,5.5vw,3.2rem)] leading-[1.08] font-normal tracking-[-0.02em] text-cream italic">
+          <h1 data-read-aloud-quiet="" className="mt-4 font-serif text-[clamp(2rem,5.5vw,3.2rem)] leading-[1.08] font-normal tracking-[-0.02em] text-cream italic">
             {post.title}
           </h1>
 
           {post.summary && (
-            <p className="mt-5 max-w-[54ch] font-serif text-[1.1rem] leading-relaxed text-cream/60 italic">
+            <p data-read-aloud-quiet="" className="mt-5 max-w-[54ch] font-serif text-[1.1rem] leading-relaxed text-cream/60 italic">
               {post.summary}
             </p>
           )}
+
+          <ReadAloud key={post.slug} articleRef={articleRef} slug={post.slug} source={post.body} />
 
           {/* Above the fold, so it loads eagerly unlike images in the body. It
               shares a transition name with the cover on the blog front page. */}
@@ -273,6 +280,7 @@ const Article = ({ post }) => {
 
           <Link
             to="/blog"
+            data-read-aloud-skip=""
             className="group mt-8 inline-flex items-center gap-2 font-mono text-[0.6rem] tracking-[0.24em] text-cream/40 uppercase transition-colors duration-[250ms] hover:text-cream"
           >
             <ArrowLeft
