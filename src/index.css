@@ -156,17 +156,26 @@
   }
 }
 
-/* The sentence being read aloud (src/components/ReadAloud.jsx). A highlight
-   paints over the text without adding elements, so links and line breaks in
-   the post stay exactly as they were. */
-::highlight(read-aloud) {
-  background-color: color-mix(in oklab, var(--color-cream) 16%, transparent);
-  color: var(--color-cream);
+/* The sentence being read aloud, drawn as a tint over each of its lines in a
+   layer of its own (see highlightRange in src/utils/article-text.js), so the
+   post's markup is untouched. Above the prose, below the navbar and dock. */
+.read-aloud-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.read-aloud-layer > div {
+  position: absolute;
+  border-radius: 0.2rem;
+  background-color: color-mix(in oklab, var(--color-cream) 14%, transparent);
 }
 
 /* While listening, the sentence under the mouse, which a click jumps to */
-::highlight(read-aloud-hover) {
-  background-color: color-mix(in oklab, var(--color-cream) 7%, transparent);
+.read-aloud-layer[data-highlight='read-aloud-hover'] > div {
+  background-color: color-mix(in oklab, var(--color-cream) 6%, transparent);
 }
 
 [data-read-aloud-target] {

@@ -2,8 +2,8 @@
 // than the markdown, so glosses, footnote markers and links read as the words
 // on screen. Built from the text nodes themselves instead of innerText: every
 // character keeps a pointer back to its node, which is what lets the sentence
-// being spoken be highlighted in place with a DOM Range, and a click on the
-// page be traced back to the sentence under it.
+// being spoken be highlighted with a DOM Range, and a click on the page be
+// traced back to the sentence under it.
 
 // Code, pictures and their captions, footnote numbers and back-arrows, copy
 // buttons, and anything marked as page furniture
@@ -41,27 +41,14 @@ const BLOCKS = new Set([
 // Read aloud but never highlighted, like the post's title and summary
 const QUIET = '[data-read-aloud-quiet]'
 
-// The text node and offset under a point on screen. Chrome 128+ and Firefox
-// have the standard call, Safari and older Chrome the WebKit one.
-const caretAt = (x, y) => {
-  if (document.caretPositionFromPoint) {
-    const caret = document.caretPositionFromPoint(x, y)
-    return caret && { node: caret.offsetNode, offset: caret.offset }
-  }
-  if (document.caretRangeFromPoint) {
-    const caret = document.caretRangeFromPoint(x, y)
-    return caret && { node: caret.startContainer, offset: caret.startOffset }
-  }
-  return null
-}
-
-// { text, rangeFor(start, end), offsetAt(x, y) }. Line breaks in the text mark
-// block edges and nothing else: whitespace inside a text node is flattened to
-// spaces one for one, so offsets in the text are offsets in the nodes.
+// { text, rangeFor(start, end, includeQuiet), spanOf(element) }. Line breaks in
+// the text mark block edges and nothing else: whitespace inside a text node is
+// flattened to spaces one for one, so offsets in the text are offsets in the
+// nodes.
 export const readArticle = root => {
   let text = ''
   const nodes = [] // { node, start } in document order
-  const starts = new Map() // text node -> its start, for offsetAt
+  const spans = new WeakMap() // element -> [start, end] of the text inside it
   const quiet = [] // [start, end] spans that are never highlighted
 
   const breakLine = () => {
@@ -72,13 +59,13 @@ export const readArticle = root => {
     for (const child of parent.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) {
         nodes.push({ node: child, start: text.length })
-        starts.set(child, text.length)
         text += child.data.replace(/\s/g, ' ')
       } else if (child.nodeType === Node.ELEMENT_NODE && !child.matches(SKIP)) {
         const block = BLOCKS.has(child.tagName)
         if (block) breakLine()
         const from = text.length
         walk(child)
+        spans.set(child, [from, text.length])
         if (child.matches(QUIET)) quiet.push([from, text.length])
         if (block) breakLine()
       }
@@ -100,10 +87,10 @@ export const readArticle = root => {
   }
 
   // Sentences are trimmed, so both ends always fall inside a text node. Null
-  // for a sentence in a quiet span, which stays unhighlighted.
-  const rangeFor = (start, end) => {
+  // for a sentence in a quiet span, which stays unhighlighted, unless asked.
+  const rangeFor = (start, end, includeQuiet = false) => {
     if (!nodes.length || end <= start) return null
-    if (quiet.some(([from, to]) => start >= from && start < to)) return null
+    if (!includeQuiet && quiet.some(([from, to]) => start >= from && start < to)) return null
     const first = nodeAt(start)
     const last = nodeAt(end - 1)
     if (!first.node.isConnected || !last.node.isConnected) return null
@@ -114,29 +101,105 @@ export const readArticle = root => {
     return range
   }
 
-  // The offset in the text under a point, or -1 off the text (a margin, an
-  // image, anything skipped)
-  const offsetAt = (x, y) => {
-    const caret = caretAt(x, y)
-    const start = caret && starts.get(caret.node)
-    return start === undefined || start === null ? -1 : start + caret.offset
+  // [start, end] of the text inside the nearest element that was read, or
+  // null for anything skipped (code, images, the player itself)
+  const spanOf = element => {
+    for (let el = element; el && el !== root.parentElement; el = el.parentElement) {
+      if (spans.has(el)) return spans.get(el)
+      if (el.matches(SKIP)) return null
+    }
+    return null
   }
 
-  return { text, rangeFor, offsetAt }
+  return { text, rangeFor, spanOf }
 }
+
+// Room around a line of text that still counts as "on" it, so the gaps of a
+// generous line height don't make the pointer flicker between sentences
+const SLOP = 6
+
+export const rangeHits = (range, x, y) =>
+  Array.from(range.getClientRects()).some(
+    rect => x >= rect.left - 2 && x <= rect.right + 2 && y >= rect.top - SLOP && y <= rect.bottom + SLOP,
+  )
 
 // --- Highlighting ------------------------------------------------------------
 //
-// The CSS Custom Highlight API paints a range without wrapping it in an
-// element, so links, glosses and line breaks are exactly as they were. Where
-// it isn't supported there is simply no highlight. Styled in index.css.
+// Drawn as tinted boxes over each line of the range, in a layer of its own at
+// the end of <body>, so the article's markup is never touched and links,
+// glosses and line breaks are exactly as they were. The boxes sit in page
+// coordinates, so scrolling needs nothing; a layout change (an image loading,
+// a resize) calls repaintHighlights. This works the same in every browser,
+// unlike the CSS Custom Highlight API, which Safari paints unreliably. Styled
+// in index.css.
 
-const canHighlight = () => typeof CSS !== 'undefined' && 'highlights' in CSS && typeof Highlight === 'function'
+const PAD = 2 // px either side of a line, so the tint doesn't clip the glyphs
+
+// A range's client rects come per text node and per inline element, so a line
+// with a link in it arrives in overlapping pieces; each line is merged into
+// one box, or the overlaps would show as darker patches.
+const lineBoxes = range => {
+  const rects = Array.from(range.getClientRects())
+    .filter(rect => rect.width > 0.5 && rect.height > 0.5)
+    .map(({ left, right, top, bottom }) => ({ left, right, top, bottom }))
+    .sort((a, b) => a.top - b.top || a.left - b.left)
+
+  const lines = []
+  for (const rect of rects) {
+    const line = lines.find(
+      box => rect.top < box.bottom - 2 && rect.bottom > box.top + 2 && rect.left <= box.right + PAD * 2,
+    )
+    if (!line) {
+      lines.push(rect)
+      continue
+    }
+    line.left = Math.min(line.left, rect.left)
+    line.right = Math.max(line.right, rect.right)
+    line.top = Math.min(line.top, rect.top)
+    line.bottom = Math.max(line.bottom, rect.bottom)
+  }
+  return lines
+}
+
+const layers = new Map() // name -> { layer, range }
+
+const paint = entry => {
+  const { scrollX, scrollY } = window
+  entry.layer.replaceChildren(
+    ...lineBoxes(entry.range).map(line => {
+      const box = document.createElement('div')
+      box.style.left = `${line.left + scrollX - PAD}px`
+      box.style.top = `${line.top + scrollY}px`
+      box.style.width = `${line.right - line.left + PAD * 2}px`
+      box.style.height = `${line.bottom - line.top}px`
+      return box
+    }),
+  )
+}
 
 // 'read-aloud' is the sentence being spoken, 'read-aloud-hover' the one a
-// click would jump to
+// click would jump to. A null range clears it.
 export const highlightRange = (range, name = 'read-aloud') => {
-  if (!canHighlight()) return
-  if (range) CSS.highlights.set(name, new Highlight(range))
-  else CSS.highlights.delete(name)
+  let entry = layers.get(name)
+
+  if (!range) {
+    entry?.layer.remove()
+    layers.delete(name)
+    return
+  }
+
+  if (!entry) {
+    const layer = document.createElement('div')
+    layer.className = 'read-aloud-layer'
+    layer.dataset.highlight = name
+    layer.setAttribute('aria-hidden', 'true')
+    document.body.append(layer)
+    entry = { layer }
+    layers.set(name, entry)
+  }
+
+  entry.range = range
+  paint(entry)
 }
+
+export const repaintHighlights = () => layers.forEach(paint)

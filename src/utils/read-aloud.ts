@@ -43,6 +43,11 @@ export interface ReadAloud {
   sentences: Sentence[]
   rate: number
   setRate: (rate: number) => void
+  /** The English voices on this device, best first */
+  voices: SpeechSynthesisVoice[]
+  /** The one in use: the listener's pick if it's installed, else the best */
+  voice: SpeechSynthesisVoice | null
+  setVoice: (voiceURI: string) => void
 }
 
 export const RATES = [0.75, 1, 1.25, 1.5]
@@ -108,8 +113,12 @@ export const splitIntoSentences = (text: string): Sentence[] => {
 // pages). Ava is first, then Microsoft's other flagship US voices; the
 // Multilingual variants come after, since they can drift into other accents
 // on loanwords. Without Edge, Chrome's "Google US English" is next best.
-// Elsewhere (Safari, Firefox) it's the best installed English voice: Apple's
-// downloadable Premium/Enhanced ones, then the good standard Apple ones.
+//
+// Safari only offers the voices installed on the device. The natural-sounding
+// Apple ones are the Premium and Enhanced downloads (System Settings ›
+// Accessibility › Spoken Content › System Voice › Manage Voices, or Settings ›
+// Accessibility › Spoken Content › Voices on iOS); without them the best is a
+// standard voice like Samantha.
 
 const NATURAL = ['Ava', 'Andrew', 'Emma', 'Brian', 'Jenny', 'Aria', 'Guy']
 
@@ -127,32 +136,59 @@ const naturalRank = (voice: SpeechSynthesisVoice) => {
 
 const GOOGLE = 'Google US English'
 
-const FALLBACKS = ['premium', 'enhanced', 'neural', 'samantha', 'daniel', 'karen', 'moira', 'serena']
+// Apple's English voices, best first
+const APPLE = ['Ava', 'Zoe', 'Evan', 'Nathan', 'Allison', 'Samantha', 'Susan', 'Tom', 'Joelle', 'Noelle', 'Alex', 'Daniel', 'Karen', 'Moira', 'Serena', 'Tessa']
 
-const score = (voice: SpeechSynthesisVoice) => {
-  const locale = (navigator.language || 'en-US').toLowerCase()
-  const name = voice.name.toLowerCase()
-  const rank = FALLBACKS.findIndex(word => name.includes(word))
+// The novelty and Eloquence voices macOS and iOS ship with (Albert, Bells,
+// Eddy, Grandma…) sound robotic, so they're a last resort
+const NOVELTY =
+  /eloquence|novelty|\b(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Junior|Ralph|Kathy|Fred|Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley)\b/i
+
+const isEnglish = (voice: SpeechSynthesisVoice) => /^en([-_]|$)/i.test(voice.lang)
+
+// Lower is better. Safari often names a downloaded Premium voice plain "Ava"
+// and keeps the tier in its voiceURI (com.apple.voice.premium.en-US.Ava), so
+// the tier is read from both.
+const fallbackRank = (voice: SpeechSynthesisVoice) => {
+  const id = `${voice.voiceURI} ${voice.name}`.toLowerCase()
+  const tier = /premium|natural|neural/.test(id) ? 0 : /enhanced/.test(id) ? 1 : 2
+
   const lang = voice.lang.replace('_', '-').toLowerCase()
-  return (rank === -1 ? 0 : 100 - rank * 5) + (lang === locale ? 3 : lang === 'en-us' ? 2 : 0) + (voice.default ? 1 : 0)
+  const locale = (navigator.language || 'en-US').toLowerCase()
+  const accent = lang === 'en-us' || lang === locale ? 0 : 1
+
+  const at = APPLE.findIndex(name => new RegExp(`\\b${name}\\b`, 'i').test(voice.name))
+  const name = at === -1 ? APPLE.length : at
+
+  return tier * 1000 + accent * 100 + name * 2 + (voice.default ? 0 : 1)
 }
 
-const pickVoice = (voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null => {
-  const natural = voices.reduce<SpeechSynthesisVoice | null>(
-    (best, voice) => (naturalRank(voice) < (best ? naturalRank(best) : Infinity) ? voice : best),
-    null,
-  )
-  if (natural) return natural
+// Edge's natural voices, then Google US English, then everything else
+const rank = (voice: SpeechSynthesisVoice) => {
+  const natural = naturalRank(voice)
+  if (natural !== Infinity) return natural
+  if (voice.name === GOOGLE) return 1000
+  return 2000 + fallbackRank(voice)
+}
 
-  const google = voices.find(voice => voice.name === GOOGLE)
-  if (google) return google
+// The English voices worth offering, best first. The novelty voices are left
+// out, unless they're all there is.
+export const englishVoices = (all: SpeechSynthesisVoice[]) => {
+  const english = all.filter(isEnglish)
+  const usable = english.filter(voice => !NOVELTY.test(`${voice.voiceURI} ${voice.name}`))
+  return (usable.length ? usable : english).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
+}
 
-  const english = voices.filter(voice => /^en([-_]|$)/i.test(voice.lang))
-  if (!english.length) return null
-  const best = english.reduce((a, b) => (score(b) > score(a) ? b : a))
-  if (score(best) >= 50) return best
-  // Nothing recognisably good: the system default, if it speaks English
-  return english.find(voice => voice.default) ?? best
+// A voice picked by hand is remembered per browser. Voices differ between
+// devices, so one that isn't installed here falls back to the best there is.
+const VOICE_KEY = 'read-aloud-voice'
+
+const savedVoice = () => {
+  try {
+    return localStorage.getItem(VOICE_KEY)
+  } catch {
+    return null
+  }
 }
 
 // --- Saved place -------------------------------------------------------------
@@ -207,8 +243,14 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
   const [currentSentenceIndex, setIndex] = useState(-1)
   const [rate, setRateState] = useState(1)
   const [savedSentenceIndex, setSaved] = useState(-1)
+  const [voices, setVoices] = useState(() => (isSupported ? englishVoices(window.speechSynthesis.getVoices()) : []))
+  const [chosen, setChosen] = useState(savedVoice)
 
-  const voice = useRef<SpeechSynthesisVoice | null>(null)
+  const voice = useMemo(
+    () => voices.find(candidate => candidate.voiceURI === chosen) ?? voices[0] ?? null,
+    [voices, chosen],
+  )
+  const voiceRef = useRef(voice)
   // Bumped whenever speech is cut off, so events from the utterances it
   // dropped (Chrome reports them as errors, Safari as ends) are ignored
   const run = useRef(0)
@@ -219,13 +261,16 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
   const sentencesRef = useRef(sentences)
   const [self] = useState(() => ({ reset: () => {} }))
 
+  useEffect(() => {
+    voiceRef.current = voice
+  }, [voice])
+
   // getVoices() is often empty until the engine has loaded its list
   useEffect(() => {
     if (!isSupported) return
     const synth = window.speechSynthesis
-    const load = () => {
-      voice.current = pickVoice(synth.getVoices())
-    }
+    const load = () => setVoices(englishVoices(synth.getVoices()))
+    // In case the list landed between the first render and this subscription
     load()
 
     if ('addEventListener' in synth) {
@@ -306,8 +351,8 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
         const index = from + offset
         const utterance = new SpeechSynthesisUtterance(sentence.text)
         utterance.rate = rateRef.current
-        utterance.lang = voice.current?.lang ?? 'en-US'
-        if (voice.current) utterance.voice = voice.current
+        utterance.lang = voiceRef.current?.lang ?? 'en-US'
+        if (voiceRef.current) utterance.voice = voiceRef.current
 
         utterance.onstart = () => {
           if (run.current !== id) return
@@ -377,8 +422,8 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
     [state, speakFrom, save],
   )
 
-  // A mid-sentence rate change doesn't take on a queued utterance, so the
-  // current sentence is started again at the new speed
+  // A mid-sentence rate or voice change doesn't take on a queued utterance,
+  // so the current sentence is started again with the new setting
   const setRate = useCallback(
     (next: number) => {
       rateRef.current = next
@@ -386,6 +431,22 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
       if (state === 'playing') speakFrom(position.current)
     },
     [state, speakFrom],
+  )
+
+  const setVoice = useCallback(
+    (voiceURI: string) => {
+      const next = voices.find(candidate => candidate.voiceURI === voiceURI)
+      if (!next) return
+      voiceRef.current = next
+      setChosen(voiceURI)
+      try {
+        localStorage.setItem(VOICE_KEY, voiceURI)
+      } catch {
+        // Storage blocked: the choice holds for this visit only
+      }
+      if (state === 'playing') speakFrom(position.current)
+    },
+    [voices, state, speakFrom],
   )
 
   // New text (another post, or an edit under the dev server) and unmounting
@@ -422,5 +483,8 @@ export function useReadAloud(text: string, { resumeKey }: ReadAloudOptions = {})
     sentences,
     rate,
     setRate,
+    voices,
+    voice,
+    setVoice,
   }
 }

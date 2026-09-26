@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Pause, Play, Square } from 'lucide-react'
-import { highlightRange, readArticle } from '../utils/article-text'
+import { highlightRange, rangeHits, readArticle, repaintHighlights } from '../utils/article-text'
 import { setDockPlayer } from '../utils/dock-player'
 import { RATES, useReadAloud } from '../utils/read-aloud'
 
@@ -31,6 +31,27 @@ const SELECT = [
 
 const PILL = 'inline-flex items-center gap-0.5 rounded-full border border-cream/12 bg-cream/[0.04] p-0.5'
 
+// "Microsoft Ava Online (Natural) - English (United States)" -> "Ava (Natural)".
+// Safari often names a Premium or Enhanced voice plainly and keeps the tier in
+// its voiceURI, so the tier is added back where the name leaves it out.
+const voiceLabel = voice => {
+  const name = voice.name
+    .replace(/^Microsoft\s+/, '')
+    .replace(/\s+Online\b/, '')
+    .replace(/\s+-\s+English.*$/, '')
+  if (name.includes('(')) return name
+  const tier = voice.voiceURI.match(/\b(premium|enhanced)\b/i)?.[1]
+  return tier ? `${name} (${tier[0].toUpperCase()}${tier.slice(1).toLowerCase()})` : name
+}
+
+const Chevron = () => (
+  <ChevronDown
+    className="pointer-events-none absolute right-2 size-3 text-cream/40"
+    strokeWidth={1.6}
+    aria-hidden="true"
+  />
+)
+
 // Tall enough to clear the fixed navbar, which hides whatever is beneath it
 const NAVBAR = 96
 
@@ -46,19 +67,38 @@ const STATUS = { idle: '', playing: 'Reading aloud', paused: 'Reading paused' }
 // Links, glosses and footnote numbers keep their own click
 const INTERACTIVE = 'a, button, select, input, textarea, label, [data-read-aloud-skip]'
 
-// The sentence holding a text offset, or -1 between sentences
-const sentenceAt = (sentences, offset) => {
+// Past this many sentences under one element (the gap between paragraphs
+// lands on the whole post body), the pointer isn't over any one of them
+const MAX_CANDIDATES = 40
+
+// The first sentence ending after an offset
+const firstEndingAfter = (sentences, offset) => {
   let low = 0
-  let high = sentences.length - 1
-  let found = -1
-  while (low <= high) {
+  let high = sentences.length
+  while (low < high) {
     const mid = (low + high) >> 1
-    if (sentences[mid].start <= offset) {
-      found = mid
-      low = mid + 1
-    } else high = mid - 1
+    if (sentences[mid].end <= offset) low = mid + 1
+    else high = mid
   }
-  return found !== -1 && offset <= sentences[found].end ? found : -1
+  return low
+}
+
+// The sentence under a pointer event, or -1. Found by checking where the
+// sentences in the element under the pointer sit on screen, rather than asking
+// the browser for the caret there: WebKit won't place a caret in text that is
+// user-select: none, as the whole site is.
+const sentenceUnder = (event, article, sentences) => {
+  if (!article || event.target.closest?.(INTERACTIVE)) return -1
+  const span = article.spanOf(event.target)
+  if (!span) return -1
+
+  const [from, to] = span
+  for (let i = firstEndingAfter(sentences, from), n = 0; i < sentences.length && sentences[i].start < to; i++) {
+    if (++n > MAX_CANDIDATES) return -1
+    const range = article.rangeFor(sentences[i].start, sentences[i].end, true)
+    if (range && rangeHits(range, event.clientX, event.clientY)) return i
+  }
+  return -1
 }
 
 export default function ReadAloud({ articleRef, slug, source }) {
@@ -85,6 +125,9 @@ export default function ReadAloud({ articleRef, slug, source }) {
     sentences,
     rate,
     setRate,
+    voices,
+    voice,
+    setVoice,
   } = useReadAloud(text, { resumeKey: `read-aloud:${slug}` })
 
   const ready = isSupported && sentences.length > 0
@@ -98,28 +141,38 @@ export default function ReadAloud({ articleRef, slug, source }) {
 
   useEffect(() => () => highlightRange(null), [])
 
+  // The highlight is drawn in page coordinates, so it's redrawn when the post
+  // reflows: an image loading above it, fonts arriving, the window resizing
+  useEffect(() => {
+    const root = articleRef.current
+    if (!listening || !root) return
+    const observer = new ResizeObserver(() => repaintHighlights())
+    observer.observe(root)
+    window.addEventListener('resize', repaintHighlights)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', repaintHighlights)
+    }
+  }, [listening, articleRef])
+
   // Clicking a sentence jumps the reading to it. With a mouse, the sentence
   // under the pointer is faintly highlighted first, so the target is clear.
   useEffect(() => {
     const root = articleRef.current
     if (!listening || !root) return
 
-    const sentenceUnder = event => {
-      if (event.target.closest?.(INTERACTIVE)) return -1
-      const offset = article.current?.offsetAt(event.clientX, event.clientY) ?? -1
-      return offset === -1 ? -1 : sentenceAt(sentences, offset)
-    }
-
     const onClick = event => {
       if (event.defaultPrevented || event.button !== 0) return
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-      const index = sentenceUnder(event)
+      const index = sentenceUnder(event, article.current, sentences)
       if (index !== -1) seek(index)
     }
 
     let frame = 0
+    let hovered = -1
     const clearHover = () => {
       cancelAnimationFrame(frame)
+      hovered = -1
       highlightRange(null, 'read-aloud-hover')
       delete root.dataset.readAloudTarget
     }
@@ -128,7 +181,10 @@ export default function ReadAloud({ articleRef, slug, source }) {
       if (event.pointerType !== 'mouse') return
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        const under = sentences[sentenceUnder(event)]
+        const index = sentenceUnder(event, article.current, sentences)
+        if (index === hovered) return
+        hovered = index
+        const under = sentences[index]
         highlightRange(under ? article.current?.rangeFor(under.start, under.end) : null, 'read-aloud-hover')
         if (under) root.dataset.readAloudTarget = ''
         else delete root.dataset.readAloudTarget
@@ -225,13 +281,33 @@ export default function ReadAloud({ articleRef, slug, source }) {
               </option>
             ))}
           </select>
-          <ChevronDown
-            className="pointer-events-none absolute right-2 size-3 text-cream/40"
-            strokeWidth={1.6}
-            aria-hidden="true"
-          />
+          <Chevron />
         </label>
       </div>
+
+      {/* Voices differ by browser and device; with one or none there's no choice */}
+      {voices.length > 1 && (
+        <label className={`${PILL} relative`}>
+          <select
+            value={voice?.voiceURI ?? ''}
+            onChange={event => setVoice(event.target.value)}
+            aria-label="Voice"
+            className={`${SELECT} max-w-[13rem] truncate normal-case`}
+          >
+            {voices.map(option => (
+              <option
+                key={option.voiceURI}
+                value={option.voiceURI}
+                title={`${option.name} (${option.lang})`}
+                className="bg-ink text-cream"
+              >
+                {voiceLabel(option)}
+              </option>
+            ))}
+          </select>
+          <Chevron />
+        </label>
+      )}
 
       <span>
         ~{minutes} min {from > 0 ? 'left' : 'listen'}
