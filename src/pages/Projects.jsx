@@ -4,7 +4,8 @@ import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import SkillPill from '../components/SkillPill'
 import Logomark from '../components/Logomark'
 import HintBadge from '../components/HintBadge'
-import { GithubIcon } from '../components/icons'
+import { GithubIcon, NpmIcon } from '../components/icons'
+import npmLogo from '../assets/logos/npm_logo.svg'
 import { getSkill } from '../utils/skill-icons'
 import { getCompany } from '../utils/experience'
 import { projects } from '../utils/projects'
@@ -141,10 +142,10 @@ const Listing = ({ filter, onFilter, activeId, onSelect, visible }) => {
                 </span>
                 <span className="truncate">{project.id}/</span>
                 <Logomark
-                  src={company?.logo}
-                  alt={company ? `${company.name} logo` : ''}
+                  src={company?.logo ?? (project.npm && npmLogo)}
+                  alt={company ? `${company.name} logo` : project.npm ? 'npm logo' : ''}
                   fallback={NAME.charAt(0)}
-                  title={company ? company.name : 'Personal project'}
+                  title={company ? company.name : project.npm ? 'npm package' : 'Personal project'}
                   className="ml-auto size-4 rounded-[0.2rem]"
                   fallbackClassName="text-[0.5rem]"
                   padding="p-px"
@@ -178,6 +179,7 @@ const Readme = ({ project, reduceMotion }) => {
   const links = [
     project.repo && { href: project.repo, label: 'repo', Icon: GithubIcon },
     project.live && { href: project.live, label: 'live', Icon: ArrowUpRight },
+    project.npm && { href: project.npm, label: 'npm', Icon: NpmIcon },
   ].filter(Boolean)
 
   return (

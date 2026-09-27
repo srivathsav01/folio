@@ -7,7 +7,9 @@
 //
 // `kind`: 'personal' or 'work'.
 //   personal — shows your monogram as the source mark, and renders whichever of
-//              `repo` / `live` you provide. Leave one blank to hide that link.
+//              `repo` / `live` / `npm` you provide. Leave one blank to hide that link.
+//              A project with an `npm` link is a published package: it shows the
+//              npm logo in place of the monogram and an "open npm" link.
 //   work     — shows the company logo instead, and never renders links. Point
 //              `companyId` at an id from src/utils/experience.js so the logo is
 //              declared in exactly one place.
@@ -33,6 +35,22 @@ export const projects = [
       'Co-built an AI agentic system (Spring AI, MCP, GPT-4) that reads Jira tickets and autonomously updates test scripts and triggers runs, cutting manual maintenance time'
     ],
     stack: ['Angular','typescript','Java', 'Spring Boot','InfluxDB','Spring AI','Apache JMeter','Grafana','Kubernetes', 'MySQL'],
+  },
+  {
+    id: 'slow-start',
+    name: 'Slow-Start',
+    kind: 'personal',
+    summary: 'A zero-dependency rate limiter published to npm that ramps up to its configured rate instead of opening at full throttle, so services with cold caches and unfilled connection pools never meet peak traffic.',
+    bullets: [
+      'Implemented Google Guava\'s SmoothWarmingUp algorithm in TypeScript — verified against the Java original, with a maximum 1 µs divergence traced to Java\'s integer truncation',
+      'Designed three limiters behind one uniform API — warm-up ramp, fixed-rate pacer, and queue bounds that wrap any two-method scheduler',
+      'Shipped Express middleware and a guard() wrapper that limits any async function, not just HTTP handlers',
+      'Built 392 tests on an injected clock, with golden vectors replayed against the packed tarball on every CI push',
+      'Benchmarked against a token bucket: 37 requests admitted in the first cold second versus 400, with ~250 ns of limiter overhead per acquisition',
+    ],
+    stack: ['Typescript'],
+    repo: 'https://github.com/srivathsav01/slow-start',
+    npm: 'https://www.npmjs.com/package/slow-start',
   },
   {
     id: 'mini-queue',
