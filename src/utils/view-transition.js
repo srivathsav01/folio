@@ -55,7 +55,7 @@ export function useOpenPost() {
 
       event.preventDefault()
       document.startViewTransition(async () => {
-        flushSync(() => navigate(`/blog/${slug}`))
+        flushSync(() => navigate(`/blog/${slug}/`))
         await whenMounted(`[data-post="${CSS.escape(slug)}"]`)
         // Land at the top of the post before the new state is captured
         window.scrollTo(0, 0)

@@ -103,7 +103,7 @@ const LeadPost = ({ post }) => {
   return (
     <motion.article variants={rise} className="relative">
       <Link
-        to={`/blog/${post.slug}`}
+        to={`/blog/${post.slug}/`}
         onClick={event => openPost(event, post.slug)}
         className="group block"
       >
@@ -172,7 +172,7 @@ const PostRow = ({ post }) => {
   return (
     <motion.article variants={rise}>
       <Link
-        to={`/blog/${post.slug}`}
+        to={`/blog/${post.slug}/`}
         onClick={event => openPost(event, post.slug)}
         className="group flex items-start gap-4 border-t border-cream/8 py-5 md:gap-6 md:py-6"
       >

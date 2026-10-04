@@ -161,7 +161,7 @@ const postPreviews = env => ({
       if (post.draft === 'true' || !post.title) continue
 
       const slug = post.slug || file.replace(/\.md$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, '')
-      const url = `${site}/blog/${slug}`
+      const url = `${site}/blog/${slug}/`
       const title = `${post.title} — ${env.VITE_NAME}`
       const summary = post.summary || title
 
