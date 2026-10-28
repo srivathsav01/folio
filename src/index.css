@@ -141,18 +141,55 @@
   }
 }
 
-/* Switching theme: a plain crossfade, overriding the post-opening animation */
-:root[data-transition='theme']::view-transition-old(root) {
-  animation: 350ms ease both vt-fade-out;
+/* Switching theme: one snapshot is clipped by a circle centred on the toggle
+   (animated in src/utils/theme.js) while the other holds still, so both drop
+   the post-opening animation. Going to light the new theme grows over the
+   old; going to dark the old shrinks away on top of the new. */
+:root[data-transition^='theme']::view-transition-old(root),
+:root[data-transition^='theme']::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
-:root[data-transition='theme']::view-transition-new(root) {
-  animation: 350ms ease both vt-fade-in;
+:root[data-transition='theme-reverse']::view-transition-old(root) {
+  z-index: 1;
 }
 
-@keyframes vt-fade-in {
+/* The toggle's icon is lifted out of the page snapshot so it spins above the
+   circle in both directions: the old icon turns out as the new one turns in.
+   Blog covers keep their shared-element names for opening a post, but here
+   they would sit unclipped above the circle, so they ride with the page. */
+:root[data-transition^='theme'] .theme-icon {
+  view-transition-name: theme-icon;
+}
+
+:root[data-transition^='theme'] [style*='view-transition-name'] {
+  view-transition-name: none !important;
+}
+
+:root[data-transition^='theme']::view-transition-group(theme-icon) {
+  z-index: 2;
+}
+
+:root[data-transition^='theme']::view-transition-old(theme-icon) {
+  animation: 500ms var(--ease-out-expo) both theme-icon-out;
+}
+
+:root[data-transition^='theme']::view-transition-new(theme-icon) {
+  animation: 500ms var(--ease-out-expo) both theme-icon-in;
+}
+
+@keyframes theme-icon-out {
+  to {
+    opacity: 0;
+    transform: rotate(180deg) scale(0.5);
+  }
+}
+
+@keyframes theme-icon-in {
   from {
     opacity: 0;
+    transform: rotate(-180deg) scale(0.5);
   }
 }
 

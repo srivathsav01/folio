@@ -94,11 +94,14 @@ export default function Navbar() {
         <button
           type="button"
           className={NAV_ACTION}
-          onClick={() => setTheme(nextTheme)}
+          onClick={event => {
+            const { left, top, width, height } = event.currentTarget.getBoundingClientRect()
+            setTheme(nextTheme, { x: left + width / 2, y: top + height / 2 })
+          }}
           data-tip={`${nextTheme} mode`}
           aria-label={`Switch to ${nextTheme} mode`}
         >
-          <ThemeIcon className="block size-4" strokeWidth={1.6} aria-hidden="true" />
+          <ThemeIcon className="theme-icon block size-4" strokeWidth={1.6} aria-hidden="true" />
         </button>
       </div>
       <Toast message="Copied to clipboard" visible={copied} />
