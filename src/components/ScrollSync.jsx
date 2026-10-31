@@ -10,6 +10,15 @@ const SECTIONS = [
   { path: '/skills', id: 'skills' },
 ]
 
+// window.location includes the deploy base and may carry a trailing slash;
+// SECTIONS paths have neither
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+const isScrollPath = pathname => {
+  const path = pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/'
+  return SECTIONS.some(s => s.path === path)
+}
+
 export default function ScrollSync() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -41,6 +50,12 @@ export default function ScrollSync() {
     const sync = () => {
       rafId = null
       if (performance.now() < lockUntil.current) return
+      // Leaving for /blog from mid-page swaps this long page for a short one, so
+      // the browser clamps the scroll to the new bottom — and that scroll event
+      // can land before this listener is removed. With no sections left and the
+      // window at the bottom, the check below would resolve to /skills and
+      // replace /blog. The address bar already shows the new URL, so bail.
+      if (!isScrollPath(window.location.pathname)) return
 
       const marker = window.innerHeight * 0.4
       let active = SECTIONS[0]
