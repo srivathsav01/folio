@@ -144,6 +144,30 @@ const writeCard = async (source, target, post) => {
   await image.extract(cropRegion(width, height, post)).resize(OG_WIDTH, OG_HEIGHT).jpeg({ quality: 85 }).toFile(target)
 }
 
+// Published posts with the frontmatter both plugins below need, newest first
+const readPublishedPosts = postsDir =>
+  readdirSync(postsDir)
+    .filter(name => name.endsWith('.md'))
+    .map(file => ({ file, post: readFrontmatter(readFileSync(resolve(postsDir, file), 'utf8')) }))
+    .filter(({ post }) => post.draft !== 'true' && post.title)
+    .map(({ file, post }) => ({
+      ...post,
+      slug: post.slug || file.replace(/\.md$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, ''),
+    }))
+    .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
+
+const setPage = (html, { title, description, url, type = 'website' }) => {
+  html = html
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeAttr(title)}</title>`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, (_, open, close) => open + escapeAttr(url) + close)
+  html = setMeta(html, 'description', description)
+  html = setMeta(html, 'og:type', type)
+  html = setMeta(html, 'og:url', url)
+  for (const key of ['og:title', 'twitter:title']) html = setMeta(html, key, title)
+  for (const key of ['og:description', 'twitter:description']) html = setMeta(html, key, description)
+  return html
+}
+
 const postPreviews = env => ({
   name: 'post-link-previews',
   apply: 'build',
@@ -156,23 +180,31 @@ const postPreviews = env => ({
     const template = readFileSync(resolve(dist, 'index.html'), 'utf8')
     const site = (env.VITE_SITE_URL || '').replace(/\/$/, '')
 
-    for (const file of readdirSync(postsDir).filter(name => name.endsWith('.md'))) {
-      const post = readFrontmatter(readFileSync(resolve(postsDir, file), 'utf8'))
-      if (post.draft === 'true' || !post.title) continue
+    // The blog front page gets its own card too, rather than the site-wide one
+    mkdirSync(resolve(dist, 'blog'), { recursive: true })
+    writeFileSync(
+      resolve(dist, 'blog', 'index.html'),
+      setPage(template, {
+        title: `Blog — ${env.VITE_NAME}`,
+        description: `Writing by ${env.VITE_NAME}: notes from building software, and what it taught me.`,
+        url: `${site}/blog/`,
+      }),
+    )
 
-      const slug = post.slug || file.replace(/\.md$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, '')
+    for (const post of readPublishedPosts(postsDir)) {
+      const { slug } = post
       const url = `${site}/blog/${slug}/`
-      const title = `${post.title} — ${env.VITE_NAME}`
-      const summary = post.summary || title
+      const summary = post.summary || `${post.title} — ${env.VITE_NAME}`
 
-      let html = template
-        .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeAttr(title)}</title>`)
-        .replace(/(<link rel="canonical" href=")[^"]*(")/, (_, open, close) => open + escapeAttr(url) + close)
-      html = setMeta(html, 'description', summary)
-      html = setMeta(html, 'og:type', 'article')
-      html = setMeta(html, 'og:url', url)
-      for (const key of ['og:title', 'twitter:title']) html = setMeta(html, key, post.title)
-      for (const key of ['og:description', 'twitter:description']) html = setMeta(html, key, summary)
+      // The tab title carries the name; the card title is the post's own
+      let html = setPage(template, { title: post.title, description: summary, url, type: 'article' })
+        .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeAttr(`${post.title} — ${env.VITE_NAME}`)}</title>`)
+      if (post.date) {
+        html = html.replace(
+          '</head>',
+          () => `  <meta property="article:published_time" content="${escapeAttr(post.date)}" />\n  </head>`,
+        )
+      }
 
       // Scrapers mostly ignore SVG, so a vector cover keeps the site card
       const cover = post.cover && !/^https?:|^\//.test(post.cover) ? post.cover.split('/').pop() : ''
@@ -196,6 +228,48 @@ const postPreviews = env => ({
   },
 })
 
+// sitemap.xml and robots.txt, so search engines find the posts without having
+// to run the app. The scroll sections all share one page, so the home page
+// stands for them. Skipped without VITE_SITE_URL: a sitemap needs absolute URLs.
+const crawlerFiles = env => ({
+  name: 'sitemap-and-robots',
+  apply: 'build',
+  closeBundle() {
+    const root = import.meta.dirname
+    const dist = resolve(root, 'dist')
+    const site = (env.VITE_SITE_URL || '').replace(/\/$/, '')
+    if (!existsSync(dist) || !site) return
+
+    const entries = [{ loc: `${site}/` }]
+    if (env.VITE_SHOW_BLOG !== 'false') {
+      const posts = readPublishedPosts(resolve(root, 'src/content/blog'))
+      entries.push({ loc: `${site}/blog/`, lastmod: posts[0]?.date })
+      for (const post of posts) entries.push({ loc: `${site}/blog/${post.slug}/`, lastmod: post.date })
+    }
+
+    const urls = entries.map(({ loc, lastmod }) =>
+      [
+        '  <url>',
+        `    <loc>${escapeAttr(loc)}</loc>`,
+        lastmod && `    <lastmod>${escapeAttr(lastmod)}</lastmod>`,
+        '  </url>',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )
+
+    const sitemap = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...urls,
+      '</urlset>',
+      '',
+    ].join('\n')
+    writeFileSync(resolve(dist, 'sitemap.xml'), sitemap)
+    writeFileSync(resolve(dist, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`)
+  },
+})
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, 'VITE_')
@@ -203,6 +277,6 @@ export default defineConfig(({ mode }) => {
   return {
     // "/" for a root deploy, "/<repo>/" for a GitHub Pages project site
     base: env.VITE_BASE_PATH || '/',
-    plugins: [react(), tailwindcss(), spaFallback(), coverFraming(), postPreviews(env)],
+    plugins: [react(), tailwindcss(), spaFallback(), coverFraming(), postPreviews(env), crawlerFiles(env)],
   }
 })

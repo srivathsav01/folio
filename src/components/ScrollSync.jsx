@@ -6,6 +6,7 @@ const SECTIONS = [
   { path: '/', id: 'home' },
   { path: '/experience', id: 'experience' },
   { path: '/projects', id: 'projects' },
+  { path: '/open-source', id: 'open-source' },
   { path: '/skills', id: 'skills' },
 ]
 

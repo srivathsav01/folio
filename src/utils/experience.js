@@ -76,7 +76,7 @@ export const companies = [
         summary: 'Role focused on leading the Performance Portal\'s evolution — frontend architecture, AI agentic tooling, and cross-team adoption.',
         bullets: [
           'Lead ongoing development and support of the Performance Portal serving 50+ engineering teams',
-          'Own the portal\’s frontend architecture, including the shared component library and state management, and integrate Grafana dashboards',
+          'Own the portal’s frontend architecture, including the shared component library and state management, and integrate Grafana dashboards',
           'Own the Playwright-based test recorder used across multiple QA teams',
           'Standardised UX across four internal products through the shared component library, cutting build time for new features',
           'Co-built an AI agentic system for the Performance Portal that autonomously updates test scripts and triggers performance runs',

@@ -24,6 +24,11 @@ services:
       # post's title and cover (see postPreviews in vite.config.js), but Render
       # only finds it for /blog/<slug>/ — the slash-less URL people share would
       # fall through to the catch-all below and get the site-wide card.
+      # The blog front page has its own card too (dist/blog/index.html), which
+      # Render likewise only finds at /blog/
+      - type: rewrite
+        source: /blog
+        destination: /blog/index.html
       - type: rewrite
         source: /blog/:slug
         destination: /blog/:slug/index.html

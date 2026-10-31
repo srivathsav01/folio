@@ -6,6 +6,7 @@ import DevCoverEditor from '../components/DevCoverEditor'
 import SectionRule from '../components/SectionRule'
 import { framingStyle } from '../utils/cover-framing'
 import { posts } from '../utils/posts'
+import { NAME } from '../site'
 import { coverTransitionName, useOpenPost } from '../utils/view-transition'
 import { PAGE, PAGE_TITLE } from './page-styles'
 
@@ -227,6 +228,14 @@ export default function Blog() {
   // Standalone route: it isn't part of the one-page scroll, so start at the top
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
+    const previous = document.title
+    document.title = `Blog — ${NAME}`
+    return () => {
+      document.title = previous
+    }
   }, [])
 
   // Warm the post route's chunk so opening a post doesn't wait on the network

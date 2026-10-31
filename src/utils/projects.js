@@ -34,7 +34,7 @@ export const projects = [
       'Built the reporting pipeline — InfluxDB metric streaming, HTML report generation, WebSocket/email alerts — and a REST API for concurrent, CI-triggered runs',
       'Co-built an AI agentic system (Spring AI, MCP, GPT-4) that reads Jira tickets and autonomously updates test scripts and triggers runs, cutting manual maintenance time'
     ],
-    stack: ['Angular','typescript','Java', 'Spring Boot','InfluxDB','Spring AI','Apache JMeter','Grafana','Kubernetes', 'MySQL'],
+    stack: ['Angular','TypeScript','Java', 'Spring Boot','InfluxDB','Spring AI','Apache JMeter','Grafana','Kubernetes', 'MySQL'],
   },
   {
     id: 'slow-start',
@@ -48,7 +48,7 @@ export const projects = [
       'Built 392 tests on an injected clock, with golden vectors replayed against the packed tarball on every CI push',
       'Benchmarked against a token bucket: 37 requests admitted in the first cold second versus 400, with ~250 ns of limiter overhead per acquisition',
     ],
-    stack: ['Typescript'],
+    stack: ['TypeScript'],
     repo: 'https://github.com/srivathsav01/slow-start',
     npm: 'https://www.npmjs.com/package/slow-start',
   },
@@ -63,7 +63,7 @@ export const projects = [
       'Built a configurable redelivery scheduler with retry counting and dead-letter queue routing for messages exceeding max attempts',
       'Implemented WebSocket-based push delivery alongside a REST API, paired with a React dashboard for real-time queue monitoring',
     ],
-    stack: ['React', 'Typescript','Java','Spring Boot','PostgreSQL','Docker','Spring Data JPA'],
+    stack: ['React', 'TypeScript','Java','Spring Boot','PostgreSQL','Docker','Spring Data JPA'],
     repo: 'https://github.com/srivathsav01/MiniQueue',
     live: 'https://miniqueue.onrender.com/',
   },

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Briefcase, CodeXml, FileText, LayoutGrid, Pause, Play, Square } from 'lucide-react'
+import { Briefcase, CodeXml, FileText, GitPullRequest, LayoutGrid, Pause, Play, Square } from 'lucide-react'
 import { OPEN_TO_WORK, OPEN_TO_WORK_LABEL, SHOW_BLOG } from '../site'
 import { useDockPlayer } from '../utils/dock-player'
 
@@ -8,6 +8,7 @@ import { useDockPlayer } from '../utils/dock-player'
 const ITEMS = [
   { to: '/experience', label: 'Experience', Icon: Briefcase, scroll: true },
   { to: '/projects', label: 'Projects', Icon: LayoutGrid, scroll: true },
+  { to: '/open-source', label: 'Open Source', Icon: GitPullRequest, scroll: true },
   { to: '/skills', label: 'Skills', Icon: CodeXml, scroll: true },
   { to: '/blog', label: 'Blog', Icon: FileText, scroll: false },
 ]

@@ -8,13 +8,15 @@ import ScrollSync from './components/ScrollSync'
 import LandingPage from './pages/LandingPage'
 import Experience from './pages/Experience'
 import Projects from './pages/Projects'
+import OpenSource from './pages/OpenSource'
 import Skills from './pages/Skills'
 import { SHOW_BLOG } from './site'
 
 const Blog = lazy(() => import('./pages/Blog'))
 const BlogPost = lazy(() => import('./pages/BlogPost'))
 
-// The stacked one-page scroll: /, /experience, /projects and /skills all live here
+// The stacked one-page scroll: /, /experience, /projects, /open-source and
+// /skills all live here
 function ScrollHome() {
   return (
     <>
@@ -22,6 +24,7 @@ function ScrollHome() {
       <LandingPage />
       <Experience />
       <Projects />
+      <OpenSource />
       <Skills />
     </>
   )

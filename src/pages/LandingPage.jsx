@@ -5,8 +5,15 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import fontData from 'three/examples/fonts/helvetiker_bold.typeface.json'
 
-import { NAME, ROLE, STACK, LOCATION_NOTE, OPEN_TO_WORK } from '../site'
+import { ArrowDown, ArrowUpRight } from 'lucide-react'
+
+import { NAME, ROLE, STACK, LOCATION_NOTE, OPEN_TO_WORK, EMAIL, RESUME, RESUME_FILENAME } from '../site'
 import { subscribeTheme } from '../utils/theme'
+
+const HERO_ACTION =
+  'group inline-flex items-center gap-2 rounded-lg border border-cream/20 bg-ink/40 px-4 py-2 font-mono text-[0.7rem] tracking-[0.08em] text-cream/75 no-underline backdrop-blur-sm transition-colors duration-[250ms] hover:border-cream/45 hover:text-cream'
+const HERO_ICON =
+  'size-3.5 transition-transform duration-[400ms] ease-out-expo group-hover:-translate-y-0.5'
 
 export default function LandingPage() {
   const canvasRef = useRef(null)
@@ -212,6 +219,24 @@ export default function LandingPage() {
             >
               {LOCATION_NOTE}
             </p>
+          )}
+
+          {/* The navbar icons are easy to miss; these are the two asks spelled out */}
+          {(EMAIL || RESUME) && (
+            <div className={`mt-5 flex flex-wrap gap-2 md:mt-6 ${rise('delay-900', 'translate-y-5')}`}>
+              {EMAIL && (
+                <a href={`mailto:${EMAIL}`} className={HERO_ACTION}>
+                  Say hello
+                  <ArrowUpRight className={HERO_ICON} strokeWidth={1.6} aria-hidden="true" />
+                </a>
+              )}
+              {RESUME && (
+                <a href={RESUME} download={RESUME_FILENAME} className={HERO_ACTION}>
+                  Résumé
+                  <ArrowDown className={HERO_ICON} strokeWidth={1.6} aria-hidden="true" />
+                </a>
+              )}
+            </div>
           )}
         </div>
       </div>
