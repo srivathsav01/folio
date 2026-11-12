@@ -15,6 +15,11 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1]
 const FORK = 'M12 0 C12 20 36 12 36 32'
 const MERGE = 'M36 0 C36 20 12 12 12 32'
 
+// Oldest first, so the graph reads down as a timeline. A repo is placed by its
+// earliest PR; ISO dates compare correctly as strings.
+const firstPrDate = c => c.prs.map(pr => pr.date).sort()[0] ?? ''
+const ordered = [...contributions].sort((a, b) => firstPrDate(a).localeCompare(firstPrDate(b)))
+
 const allPrs = contributions.flatMap(c => c.prs)
 const merged = allPrs.filter(pr => pr.status === 'merged')
 const linesUpstream = merged.reduce((sum, pr) => sum + (pr.additions ?? 0) + (pr.deletions ?? 0), 0)
@@ -226,7 +231,7 @@ const Contribution = ({ contribution, reduceMotion }) => {
             )}
 
             <ul className="mt-6 flex flex-col gap-4">
-              {prs.map(pr => (
+              {[...prs].sort((a, b) => a.date.localeCompare(b.date)).map(pr => (
                 <PullRequest key={pr.number} repo={repo} pr={pr} />
               ))}
             </ul>
@@ -295,7 +300,7 @@ export default function OpenSource() {
             className="absolute -top-6 -bottom-2 left-[11.5px] w-px bg-linear-to-b from-transparent via-cream/30 to-transparent"
           />
           <ol className="relative">
-            {contributions.map(contribution => (
+            {ordered.map(contribution => (
               <Contribution key={contribution.repo} contribution={contribution} reduceMotion={reduceMotion} />
             ))}
           </ol>
