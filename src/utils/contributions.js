@@ -27,7 +27,7 @@
 export const contributions = [
   {
     repo: 'quarkusio/quarkus',
-    summary: 'The Kubernetes-native Java framework built for fast startup and low memory. Fixed database detection so apps using Hibernate ORM with offline startup boot on DB2 and keep PostgreSQL on its faster defaults.',
+    summary: 'The Kubernetes-native Java framework built for fast startup and low memory. Fixed how its Hibernate ORM extension reads database-specific settings, so offline startup works on DB2 and MySQL tables get the storage engine configured for MySQL.',
     prs: [
       {
         number: 58143,
@@ -38,13 +38,24 @@ export const contributions = [
         deletions: 2,
         issue: { number: 50209, date: '2025-09-22', reportedByMe: false },
       },
+      {
+        number: 58414,
+        title: 'Prefer the MySQL storage engine setting on MySQL',
+        status: 'merged',
+        date: '2026-11-16',
+        additions: 143,
+        deletions: 3,
+        issue: { number: 58413, date: '2026-11-14', reportedByMe: true },
+      },
     ],
     bullets: [
       'The PostgreSQL/DB2 check compared `Optional.toString()` (`"Optional[db2]"`) against the database kind, so it never matched',
       'DB2 apps failed at startup because they were forced onto a local temporary-table strategy DB2Dialect does not support, and PostgreSQL silently lost its CTE-based defaults',
       'Fixed the operator grouping so the presence check covers both databases (the same helper is shared with Hibernate Reactive), and added offline-startup tests for DB2 and PostgreSQL',
+      'With both MySQL and MariaDB storage engines configured, the MariaDB value won even on MySQL, so `innodb` could silently become non-transactional `myisam`. MySQL now reads its own setting first, falling back to MariaDB\'s',
+      'Restored the real property name in the "neither MySQL nor MariaDB" warning, which still pointed at a setting that no longer exists',
     ],
-    stack: ['Java', 'PostgreSQL', 'SQL'],
+    stack: ['Java', 'PostgreSQL', 'MySQL', 'SQL'],
   },
   {
     repo: 'testcontainers/testcontainers-java',
