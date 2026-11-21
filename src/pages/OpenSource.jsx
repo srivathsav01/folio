@@ -1,5 +1,6 @@
+import { useId, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowUpRight, CircleDot, GitPullRequest } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, CircleDot, GitPullRequest } from 'lucide-react'
 import SkillPill from '../components/SkillPill'
 import { GithubIcon } from '../components/icons'
 import { getSkill } from '../utils/skill-icons'
@@ -137,6 +138,50 @@ const PullRequest = ({ repo, pr }) => {
   )
 }
 
+const Bullets = ({ items }) => (
+  <ul className="flex flex-col gap-2.5">
+    {items.map(text => (
+      <li key={text} className="flex gap-2.5 font-mono text-[0.74rem] leading-relaxed text-cream/60">
+        <span aria-hidden="true" className="shrink-0 text-cream/25">
+          ↳
+        </span>
+        <span className="max-w-[64ch]">
+          <Inline text={text} />
+        </span>
+      </li>
+    ))}
+  </ul>
+)
+
+// Below md the bullets fold away behind a toggle, so a stacked row stays short;
+// from md up there's room beside the PR, and they're always shown
+const PrBullets = ({ items }) => {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(o => !o)}
+        className="inline-flex items-center gap-1.5 font-mono text-[0.62rem] tracking-[0.16em] text-cream/45 uppercase transition-colors duration-[250ms] hover:text-cream md:hidden"
+      >
+        What changed · {items.length}
+        <ChevronDown
+          aria-hidden="true"
+          strokeWidth={1.8}
+          className={`block size-3 transition-transform duration-[400ms] ease-out-expo ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div id={id} className={`${open ? 'mt-3 block' : 'hidden'} md:mt-0 md:block`}>
+        <Bullets items={items} />
+      </div>
+    </div>
+  )
+}
+
 const Contribution = ({ contribution, reduceMotion }) => {
   const { repo, summary, prs, bullets = [], stack = [] } = contribution
   const [owner, name] = repo.split('/')
@@ -146,6 +191,13 @@ const Contribution = ({ contribution, reduceMotion }) => {
   const isMerged = mergedPrs.length > 0
   const mergedOn = isMerged ? mergedPrs.map(pr => pr.date).sort().at(-1) : null
   const foundAndFixed = mergedPrs.some(pr => pr.issue?.reportedByMe)
+
+  // Bullets are `{ pr, text }`; each PR gets a row with its own bullets beside
+  // it. Plain-string bullets aren't tied to a PR, so they go after the rows.
+  const sortedPrs = [...prs].sort((a, b) => a.date.localeCompare(b.date))
+  const tagged = bullets.filter(b => typeof b !== 'string')
+  const untagged = bullets.filter(b => typeof b === 'string')
+  const bulletsFor = number => tagged.filter(b => b.pr === number).map(b => b.text)
 
   const draw = (delay = 0) =>
     reduceMotion
@@ -223,46 +275,39 @@ const Contribution = ({ contribution, reduceMotion }) => {
           </ChipLink>
         </div>
 
-        {/* What and where on the left, how on the right; stacked below md */}
-        <div className="mt-5 grid gap-x-12 gap-y-6 md:grid-cols-2">
-          <div>
-            {summary && (
-              <p className="max-w-[60ch] font-mono text-[0.78rem] leading-relaxed text-cream/55">{summary}</p>
-            )}
+        {summary && (
+          <p className="mt-5 max-w-[60ch] font-mono text-[0.78rem] leading-relaxed text-cream/55">{summary}</p>
+        )}
 
-            <ul className="mt-6 flex flex-col gap-4">
-              {[...prs].sort((a, b) => a.date.localeCompare(b.date)).map(pr => (
-                <PullRequest key={pr.number} repo={repo} pr={pr} />
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            {bullets.length > 0 && (
-              <ul className="flex flex-col gap-2.5">
-                {bullets.map(bullet => (
-                  <li key={bullet} className="flex gap-2.5 font-mono text-[0.74rem] leading-relaxed text-cream/60">
-                    <span aria-hidden="true" className="shrink-0 text-cream/25">
-                      ↳
-                    </span>
-                    <span className="max-w-[64ch]">
-                      <Inline text={bullet} />
-                    </span>
-                  </li>
-                ))}
+        {/* One row per PR: the PR on the left, what it changed on the right; stacked below md */}
+        <div className="mt-6 flex flex-col">
+          {sortedPrs.map((pr, i) => (
+            <div
+              key={pr.number}
+              className={`grid gap-x-12 gap-y-4 md:grid-cols-2 ${i > 0 ? 'mt-6 border-t border-cream/10 pt-6' : ''}`}
+            >
+              <ul className="flex flex-col gap-4">
+                <PullRequest repo={repo} pr={pr} />
               </ul>
-            )}
-
-            {stack.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2 md:gap-3">
-                {stack.map(skillName => {
-                  const skill = getSkill(skillName)
-                  return <SkillPill key={skillName} skillName={skill.name} icon={skill.icon} />
-                })}
-              </div>
-            )}
-          </div>
+              {bulletsFor(pr.number).length > 0 && <PrBullets items={bulletsFor(pr.number)} />}
+            </div>
+          ))}
         </div>
+
+        {untagged.length > 0 && (
+          <div className="mt-6 md:ml-[calc(50%+1.5rem)]">
+            <Bullets items={untagged} />
+          </div>
+        )}
+
+        {stack.length > 0 && (
+          <div className="mt-8 flex flex-wrap gap-2 md:gap-3">
+            {stack.map(skillName => {
+              const skill = getSkill(skillName)
+              return <SkillPill key={skillName} skillName={skill.name} icon={skill.icon} />
+            })}
+          </div>
+        )}
       </motion.div>
     </li>
   )

@@ -18,6 +18,10 @@
 //               `date` is when it was opened, and `reportedByMe: true` marks a bug
 //               you found yourself, which the page calls out as "found & fixed".
 //
+// `bullets` are the technically interesting parts. Tag each with the PR it
+// belongs to, `{ pr, text }`, so a repo with several PRs can show which is which;
+// a plain string still works and is shown untagged.
+//
 // `stack` entries are matched by name against src/utils/skill-icons.jsx, the
 // same way project stacks are.
 //
@@ -49,11 +53,11 @@ export const contributions = [
       },
     ],
     bullets: [
-      'The PostgreSQL/DB2 check compared `Optional.toString()` (`"Optional[db2]"`) against the database kind, so it never matched',
-      'DB2 apps failed at startup because they were forced onto a local temporary-table strategy DB2Dialect does not support, and PostgreSQL silently lost its CTE-based defaults',
-      'Fixed the operator grouping so the presence check covers both databases (the same helper is shared with Hibernate Reactive), and added offline-startup tests for DB2 and PostgreSQL',
-      'With both MySQL and MariaDB storage engines configured, the MariaDB value won even on MySQL, so `innodb` could silently become non-transactional `myisam`. MySQL now reads its own setting first, falling back to MariaDB\'s',
-      'Restored the real property name in the "neither MySQL nor MariaDB" warning, which still pointed at a setting that no longer exists',
+      { pr: 58143, text: 'The PostgreSQL/DB2 check compared `Optional.toString()` (`"Optional[db2]"`) against the database kind, so it never matched' },
+      { pr: 58143, text: 'DB2 apps failed at startup because they were forced onto a local temporary-table strategy DB2Dialect does not support, and PostgreSQL silently lost its CTE-based defaults' },
+      { pr: 58143, text: 'Fixed the operator grouping so the presence check covers both databases (the same helper is shared with Hibernate Reactive), and added offline-startup tests for DB2 and PostgreSQL' },
+      { pr: 58414, text: 'With both MySQL and MariaDB storage engines configured, the MariaDB value won even on MySQL, so `innodb` could silently become non-transactional `myisam`. MySQL now reads its own setting first, falling back to MariaDB\'s' },
+      { pr: 58414, text: 'Restored the real property name in the "neither MySQL nor MariaDB" warning, which still pointed at a setting that no longer exists' },
     ],
     stack: ['Java', 'PostgreSQL', 'MySQL', 'SQL'],
   },
@@ -72,9 +76,9 @@ export const contributions = [
       },
     ],
     bullets: [
-      'Values tagged `!override` were being dropped like `!reset`, so an override file\'s image was ignored and the base file\'s image pre-pulled instead',
-      'Kept the YAML constructor restricted to safe tags, so arbitrary-class deserialization is still rejected',
-      'Stopped one malformed service from silently ending the parse of every service after it, and kept top-level keys and `x-*` extension fields from being mistaken for services',
+      { pr: 12095, text: 'Values tagged `!override` were being dropped like `!reset`, so an override file\'s image was ignored and the base file\'s image pre-pulled instead' },
+      { pr: 12095, text: 'Kept the YAML constructor restricted to safe tags, so arbitrary-class deserialization is still rejected' },
+      { pr: 12095, text: 'Stopped one malformed service from silently ending the parse of every service after it, and kept top-level keys and `x-*` extension fields from being mistaken for services' },
     ],
     stack: ['Java', 'Docker'],
   },
