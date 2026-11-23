@@ -25,6 +25,19 @@
     }
   }
 
+  /* Experience rail dots, pulsing until the visitor picks a role */
+  --animate-blink: blink 1.6s ease-in-out infinite;
+
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
   /* Block cursor for the Projects terminal — hard on/off, never a fade */
   --animate-caret: caret 1.1s steps(1) infinite;
 

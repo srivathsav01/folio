@@ -42,7 +42,7 @@ const CompanyHeader = ({ company }) => (
   </div>
 )
 
-const RailNode = ({ role, isActive, isPast }) => (
+const RailNode = ({ role, index, isActive, isPast, blink }) => (
   <span
     aria-hidden="true"
     className="relative mx-auto flex size-[0.6rem] items-center justify-center"
@@ -58,6 +58,14 @@ const RailNode = ({ role, isActive, isPast }) => (
               : 'bg-cream/20'
       }`}
     />
+    {/* Until a role is picked, the other stations pulse to say they're clickable,
+        each a beat after the last so the pulse runs along the rail */}
+    {blink && !isActive && (
+      <span
+        className="absolute inset-0 animate-blink rounded-full bg-cream shadow-[0_0_10px_2px_color-mix(in_oklab,var(--color-cream)_35%,transparent)] motion-reduce:animate-none motion-reduce:opacity-0"
+        style={{ animationDelay: `${index * 0.2}s` }}
+      />
+    )}
     {role.current && isActive && (
       <span className="absolute inset-0 animate-beacon rounded-full bg-signal opacity-75 motion-reduce:animate-none" />
     )}
@@ -142,7 +150,13 @@ const Rail = ({ companyName, roles, activeIndex, onSelect, showHint, reduceMotio
                 onClick={() => onSelect(index)}
                 className="group flex cursor-pointer flex-col items-center gap-3 border-none bg-transparent p-0 text-center focus-visible:outline-none"
               >
-                <RailNode role={role} isActive={isActive} isPast={index < activeIndex} />
+                <RailNode
+                  role={role}
+                  index={index}
+                  isActive={isActive}
+                  isPast={index < activeIndex}
+                  blink={showHint}
+                />
 
                 <span
                   className={`font-mono text-[0.6rem] leading-relaxed tracking-[0.16em] text-balance uppercase transition-colors duration-[300ms] md:text-[0.62rem] ${
